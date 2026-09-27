@@ -35,6 +35,9 @@ export function fakeGitlab({
     merge_requests: new Map<number, Json[]>(),
   };
   const statuses = new Map<string, Json[]>();
+  const files = new Map<string, string>(); // `${ref}:${path}` -> content
+  const setFile = (path: string, content: string, ref = 'main') =>
+    files.set(`${ref}:${path}`, content);
   let nextIssue = 1;
   let nextMr = 1;
   let nextId = 5000;
@@ -166,6 +169,27 @@ export function fakeGitlab({
   fake.route(`GET ${P}`, ({ params }) =>
     isProject(params) ? { body: project() } : fake.notFound(),
   );
+
+  fake.route(`GET ${P}/repository/files/{file_path}`, ({ params, query }) => {
+    const ref = query.get('ref') === 'HEAD' ? 'main' : query.get('ref');
+    if (!ref) return { status: 400, body: { error: 'ref is missing' } };
+    const content = files.get(`${ref}:${params.file_path}`);
+    // Directories and missing files are both 404s on GitLab.
+    if (content === undefined)
+      return { status: 404, body: { message: '404 File Not Found' } };
+    return {
+      body: {
+        file_name: params.file_path.split('/').pop(),
+        file_path: params.file_path,
+        size: Buffer.byteLength(content),
+        encoding: 'base64',
+        content: Buffer.from(content).toString('base64'),
+        ref,
+        blob_id: 'blob',
+        commit_id: 'commit',
+      },
+    };
+  });
 
   fake.route(`GET ${P}/issues`, ({ params, query }) => {
     if (!isProject(params)) return fake.notFound();
@@ -346,6 +370,7 @@ export function fakeGitlab({
     addNote,
     newIssue,
     newMergeRequest,
+    setFile,
     webUrl,
   };
 }

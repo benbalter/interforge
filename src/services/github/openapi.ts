@@ -49,6 +49,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{repo}/contents/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository content
+         * @description Gets the contents of a file or directory in a repository. Specify the file path or directory with the `path` parameter. If you omit the `path` parameter, you will receive the contents of the repository's root directory.
+         *
+         *     This endpoint supports the following custom media types. For more information, see "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+         *
+         *     - **`application/vnd.github.raw+json`**: Returns the raw file contents for files and symlinks.
+         *     - **`application/vnd.github.html+json`**: Returns the file contents in HTML. Markup languages are rendered to HTML using GitHub's open-source [Markup library](https://github.com/github/markup).
+         *     - **`application/vnd.github.object+json`**: Returns the contents in a consistent object format regardless of the content type. For example, instead of an array of objects for a directory, the response will be an object with an `entries` attribute containing the array of objects.
+         *
+         *     If the content is a directory: The response will be an array of objects, one object for each item in the directory.
+         *
+         *     If the content is a symlink and the symlink's target is a normal file in the repository, then the API responds with the content of the file. Otherwise, the API responds with an object describing the symlink itself.
+         *
+         *     If the content is a submodule, the `submodule_git_url` field identifies the location of the submodule repository, and the `sha` identifies a specific commit within the submodule repository. Git uses the given URL when cloning the submodule repository, and checks out the submodule at that specific commit. If the submodule repository is not hosted on github.com, the Git URLs (`git_url` and `_links["git"]`) and the github.com URLs (`html_url` and `_links["html"]`) will have null values.
+         *
+         *     **Notes**:
+         *
+         *     - To get a repository's contents recursively, you can [recursively get the tree](https://docs.github.com/rest/git/trees#get-a-tree).
+         *     - This API has an upper limit of 1,000 files for a directory. If you need to retrieve
+         *     more files, use the [Git Trees API](https://docs.github.com/rest/git/trees#get-a-tree).
+         *     - Download URLs expire and are meant to be used just once. To ensure the download URL does not expire, please use the contents API to obtain a fresh download URL for each download.
+         *     - If the requested file's size is:
+         *       - 1 MB or smaller: All features of this endpoint are supported.
+         *       - Between 1-100 MB: Only the `raw` or `object` custom media types are supported. Both will work as normal, except that when using the `object` media type, the `content` field will be an empty
+         *     string and the `encoding` field will be `"none"`. To get the contents of these larger files, use the `raw` media type.
+         *       - Greater than 100 MB: This endpoint is not supported.
+         */
+        get: operations["repos/get-content"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{repo}/issues": {
         parameters: {
             query?: never;
@@ -2782,6 +2826,189 @@ export interface components {
             creator: components["schemas"]["nullable-simple-user"];
         };
         /**
+         * Content Tree
+         * @description Content Tree
+         */
+        "content-tree": {
+            type: string;
+            size: number;
+            name: string;
+            path: string;
+            sha: string;
+            content?: string;
+            /** Format: uri */
+            url: string;
+            /** Format: uri */
+            git_url: string | null;
+            /** Format: uri */
+            html_url: string | null;
+            /** Format: uri */
+            download_url: string | null;
+            entries?: {
+                type: string;
+                size: number;
+                name: string;
+                path: string;
+                sha: string;
+                /** Format: uri */
+                url: string;
+                /** Format: uri */
+                git_url: string | null;
+                /** Format: uri */
+                html_url: string | null;
+                /** Format: uri */
+                download_url: string | null;
+                _links: {
+                    /** Format: uri */
+                    git: string | null;
+                    /** Format: uri */
+                    html: string | null;
+                    /** Format: uri */
+                    self: string;
+                };
+            }[];
+            encoding?: string;
+            _links: {
+                /** Format: uri */
+                git: string | null;
+                /** Format: uri */
+                html: string | null;
+                /** Format: uri */
+                self: string;
+            };
+        };
+        /**
+         * Content Directory
+         * @description A list of directory items
+         */
+        "content-directory": {
+            /** @enum {string} */
+            type: "dir" | "file" | "submodule" | "symlink";
+            size: number;
+            name: string;
+            path: string;
+            content?: string;
+            sha: string;
+            /** Format: uri */
+            url: string;
+            /** Format: uri */
+            git_url: string | null;
+            /** Format: uri */
+            html_url: string | null;
+            /** Format: uri */
+            download_url: string | null;
+            _links: {
+                /** Format: uri */
+                git: string | null;
+                /** Format: uri */
+                html: string | null;
+                /** Format: uri */
+                self: string;
+            };
+        }[];
+        /**
+         * Content File
+         * @description Content File
+         */
+        "content-file": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "file";
+            encoding: string;
+            size: number;
+            name: string;
+            path: string;
+            content: string;
+            sha: string;
+            /** Format: uri */
+            url: string;
+            /** Format: uri */
+            git_url: string | null;
+            /** Format: uri */
+            html_url: string | null;
+            /** Format: uri */
+            download_url: string | null;
+            _links: {
+                /** Format: uri */
+                git: string | null;
+                /** Format: uri */
+                html: string | null;
+                /** Format: uri */
+                self: string;
+            };
+            /** @example "actual/actual.md" */
+            target?: string;
+            /** @example "git://example.com/defunkt/dotjs.git" */
+            submodule_git_url?: string;
+        };
+        /**
+         * Symlink Content
+         * @description An object describing a symlink
+         */
+        "content-symlink": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "symlink";
+            target: string;
+            size: number;
+            name: string;
+            path: string;
+            sha: string;
+            /** Format: uri */
+            url: string;
+            /** Format: uri */
+            git_url: string | null;
+            /** Format: uri */
+            html_url: string | null;
+            /** Format: uri */
+            download_url: string | null;
+            _links: {
+                /** Format: uri */
+                git: string | null;
+                /** Format: uri */
+                html: string | null;
+                /** Format: uri */
+                self: string;
+            };
+        };
+        /**
+         * Submodule Content
+         * @description An object describing a submodule
+         */
+        "content-submodule": {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "submodule";
+            /** Format: uri */
+            submodule_git_url: string;
+            size: number;
+            name: string;
+            path: string;
+            sha: string;
+            /** Format: uri */
+            url: string;
+            /** Format: uri */
+            git_url: string | null;
+            /** Format: uri */
+            html_url: string | null;
+            /** Format: uri */
+            download_url: string | null;
+            _links: {
+                /** Format: uri */
+                git: string | null;
+                /** Format: uri */
+                html: string | null;
+                /** Format: uri */
+                self: string;
+            };
+        };
+        /**
          * Pull Request
          * @description Pull requests let you tell others about changes you've pushed to a repository on GitHub. Once a pull request is sent, interested parties can review the set of changes, discuss potential modifications, and even push follow-up commits if necessary.
          */
@@ -3268,6 +3495,13 @@ export interface components {
                 "application/json": components["schemas"]["basic-error"];
             };
         };
+        /** @description Found */
+        found: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
         /** @description Unacceptable */
         unacceptable: {
             headers: {
@@ -3358,6 +3592,45 @@ export interface operations {
                 };
             };
             301: components["responses"]["moved_permanently"];
+            403: components["responses"]["forbidden"];
+            404: components["responses"]["not_found"];
+        };
+    };
+    "repos/get-content": {
+        parameters: {
+            query?: {
+                /** @description The name of the commit/branch/tag. Default: the repository’s default branch. */
+                ref?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The account owner of the repository. The name is not case sensitive. */
+                owner: components["parameters"]["owner"];
+                /** @description The name of the repository without the `.git` extension. The name is not case sensitive. */
+                repo: components["parameters"]["repo"];
+                /** @description path parameter */
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.github.object": components["schemas"]["content-tree"];
+                    "application/json": components["schemas"]["content-directory"] | components["schemas"]["content-file"] | components["schemas"]["content-symlink"] | components["schemas"]["content-submodule"];
+                };
+            };
+            302: components["responses"]["found"];
+            304: components["responses"]["not_modified"];
             403: components["responses"]["forbidden"];
             404: components["responses"]["not_found"];
         };

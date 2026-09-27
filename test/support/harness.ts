@@ -25,6 +25,7 @@ export interface Harness {
   ref: ProjectRef;
   projectUrl: string;
   fake: FakeForge;
+  setFile: (path: string, content: string, ref?: string) => void;
 }
 
 interface CommonOptions {

@@ -73,3 +73,8 @@ export async function collectPages<T>(
   }
   return items;
 }
+
+/** Decodes a base64 file body (GitHub wraps it in newlines) as UTF-8. */
+export function decodeBase64(content: string): string {
+  return Buffer.from(content, 'base64').toString('utf8');
+}

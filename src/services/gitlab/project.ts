@@ -6,7 +6,7 @@ import {
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
-import { collectPages, unwrap } from '../../http.js';
+import { collectPages, decodeBase64, unwrap } from '../../http.js';
 import { assertAssigned, GitlabIssue } from './issue.js';
 import {
   toCommitFlag,
@@ -157,6 +157,22 @@ export class GitlabProject extends GitProject {
       }),
     );
     return new GitlabMergeRequest(toPullRequestData(data), this);
+  }
+
+  async getFileContent(path: string, ref?: string) {
+    const { data } = await unwrap(
+      'gitlab',
+      this.client.GET('/api/v4/projects/{id}/repository/files/{file_path}', {
+        params: {
+          path: { id: this.id, file_path: path },
+          // GitLab requires a ref. HEAD is the default branch.
+          query: { ref: ref ?? this.defaultBranch ?? 'HEAD' },
+        },
+      }),
+    );
+    return data.encoding === 'base64'
+      ? decodeBase64(data.content)
+      : data.content;
   }
 
   async setCommitStatus(

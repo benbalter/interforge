@@ -45,3 +45,12 @@ describe('GitHub specifics', () => {
     expect(service.hostname).toBe('ghe.example.com');
   });
 });
+
+describe('GitHub file contents', () => {
+  test('files over 1 MB are fetched with the raw media type', async () => {
+    const { service, ref, setFile } = github({ largeFileBytes: 10 });
+    setFile('big.txt', 'more than ten bytes');
+    const project = await service.getProject(ref);
+    expect(await project.getFileContent('big.txt')).toBe('more than ten bytes');
+  });
+});

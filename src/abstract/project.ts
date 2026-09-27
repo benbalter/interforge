@@ -78,6 +78,13 @@ export abstract class GitProject {
     sourceBranch: string,
   ): Promise<PullRequest>;
 
+  /**
+   * A file's contents as UTF-8 text, from `ref` (a branch, tag or commit), or
+   * the default branch. Throws NotFoundError for missing files and ForgeError
+   * for paths that aren't files.
+   */
+  abstract getFileContent(path: string, ref?: string): Promise<string>;
+
   abstract setCommitStatus(
     sha: string,
     state: CommitStatus,

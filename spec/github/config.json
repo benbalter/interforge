@@ -5,6 +5,7 @@
   "operations": [
     "GET /user",
     "GET /repos/{owner}/{repo}",
+    "GET /repos/{owner}/{repo}/contents/{path}",
     "GET /repos/{owner}/{repo}/issues",
     "POST /repos/{owner}/{repo}/issues",
     "GET /repos/{owner}/{repo}/issues/{issue_number}",

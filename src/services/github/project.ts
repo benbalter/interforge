@@ -1,5 +1,6 @@
 import type { CommitFlagOptions } from '../../abstract/commit-flag.js';
 import {
+  ForgeError,
   IssueTrackerDisabled,
   OperationNotSupported,
 } from '../../abstract/errors.js';
@@ -9,7 +10,7 @@ import {
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
-import { collectPages, unwrap } from '../../http.js';
+import { collectPages, decodeBase64, unwrap } from '../../http.js';
 import { GithubIssue } from './issue.js';
 import {
   toCommitFlag,
@@ -139,6 +140,33 @@ export class GithubProject extends GitProject {
       }),
     );
     return new GithubPullRequest(toPullRequestData(data), this);
+  }
+
+  async getFileContent(path: string, ref?: string) {
+    const params = { path: { ...this.path, path }, query: { ref } };
+    const { data } = await unwrap(
+      'github',
+      this.client.GET('/repos/{owner}/{repo}/contents/{path}', { params }),
+    );
+    if (Array.isArray(data) || !('type' in data) || data.type !== 'file') {
+      const type = Array.isArray(data) ? 'dir' : data.type;
+      throw new ForgeError(`${path} is a ${type}, not a file`);
+    }
+    if ('encoding' in data && data.encoding === 'base64') {
+      return decodeBase64(data.content ?? '');
+    }
+
+    // Files over 1 MB come back without content. The raw media type
+    // returns them (up to 100 MB).
+    const { data: raw } = await unwrap(
+      'github',
+      this.client.GET('/repos/{owner}/{repo}/contents/{path}', {
+        params,
+        headers: { Accept: 'application/vnd.github.raw+json' },
+        parseAs: 'text',
+      }),
+    );
+    return raw;
   }
 
   async setCommitStatus(

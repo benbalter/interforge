@@ -1763,6 +1763,67 @@
         ]
       }
     },
+    "/api/v4/projects/{id}/repository/files/{file_path}": {
+      "get": {
+        "operationId": "getApiV4ProjectsIdRepositoryFilesFilePath",
+        "summary": "Retrieve a file from a repository",
+        "description": "Retrieves information about a specified file in a repository. This includes information like the name, size, and the file contents. File content is Base64 encoded.",
+        "tags": [
+          "Files"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgewrightRepositoryFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "description": "The project ID",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "example": "gitlab-org/gitlab"
+          },
+          {
+            "name": "file_path",
+            "required": true,
+            "description": "The URL-encoded path to the file.",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "example": "lib%2Fclass%2Erb"
+          },
+          {
+            "name": "ref",
+            "required": true,
+            "description": "The name of branch, tag or commit",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "in": "query",
+            "example": "main"
+          }
+        ]
+      }
+    },
     "/api/v4/projects/{id}/issues": {
       "get": {
         "operationId": "getApiV4ProjectsIdIssues",
@@ -7618,6 +7679,55 @@
         "required": [
           "state"
         ]
+      },
+      "ForgewrightRepositoryFile": {
+        "type": "object",
+        "required": [
+          "file_name",
+          "file_path",
+          "size",
+          "encoding",
+          "content",
+          "ref",
+          "blob_id",
+          "commit_id"
+        ],
+        "properties": {
+          "file_name": {
+            "type": "string"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "encoding": {
+            "type": "string",
+            "example": "base64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "content_sha256": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "blob_id": {
+            "type": "string"
+          },
+          "commit_id": {
+            "type": "string"
+          },
+          "last_commit_id": {
+            "type": "string"
+          },
+          "execute_filemode": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },

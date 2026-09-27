@@ -63,6 +63,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v4/projects/{id}/repository/files/{file_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieve a file from a repository
+         * @description Retrieves information about a specified file in a repository. This includes information like the name, size, and the file contents. File content is Base64 encoded.
+         */
+        get: operations["getApiV4ProjectsIdRepositoryFilesFilePath"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v4/projects/{id}/issues": {
         parameters: {
             query?: never;
@@ -1864,6 +1884,20 @@ export interface components {
             /** @description An existing pipeline ID, when multiple pipelines on the same commit SHA have been triggered */
             pipeline_id?: number | null;
         };
+        ForgewrightRepositoryFile: {
+            file_name: string;
+            file_path: string;
+            size: number;
+            /** @example base64 */
+            encoding: string;
+            content: string;
+            content_sha256?: string;
+            ref: string;
+            blob_id: string;
+            commit_id: string;
+            last_commit_id?: string;
+            execute_filemode?: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -2023,6 +2057,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIEntitiesProjectsWithAccessAndCatalogSetting"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getApiV4ProjectsIdRepositoryFilesFilePath: {
+        parameters: {
+            query: {
+                /**
+                 * @description The name of branch, tag or commit
+                 * @example main
+                 */
+                ref: string | null;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The project ID
+                 * @example gitlab-org/gitlab
+                 */
+                id: string;
+                /**
+                 * @description The URL-encoded path to the file.
+                 * @example lib%2Fclass%2Erb
+                 */
+                file_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgewrightRepositoryFile"];
                 };
             };
             /** @description Bad Request */

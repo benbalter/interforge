@@ -9,6 +9,8 @@ interface Options {
   repo?: string;
   hasIssues?: boolean;
   viewer?: string;
+  /** GitHub leaves `content` empty for files over 1 MB. */
+  largeFileBytes?: number;
 }
 
 /**
@@ -21,12 +23,16 @@ export function fakeGithub({
   repo = 'widgets',
   hasIssues = true,
   viewer = 'alice',
+  largeFileBytes = 1024 * 1024,
 }: Options = {}) {
   const fake = new FakeForge('github', API);
   const issues = new Map<number, Json>(); // includes PRs, as GitHub does
   const pulls = new Map<number, Json>();
   const comments = new Map<number, Json & { issue_number: number }>();
   const statuses = new Map<string, Json[]>();
+  const files = new Map<string, string>(); // `${ref}:${path}` -> content
+  const setFile = (path: string, content: string, ref = 'main') =>
+    files.set(`${ref}:${path}`, content);
   let nextNumber = 1;
   let nextId = 1000;
   let clock = Date.parse('2026-01-01T00:00:00Z');
@@ -151,6 +157,52 @@ export function fakeGithub({
 
   fake.route('GET /repos/{owner}/{repo}', ({ params }) =>
     isRepo(params) ? { body: repository() } : fake.notFound(),
+  );
+
+  fake.route(
+    'GET /repos/{owner}/{repo}/contents/{path}',
+    ({ params, query, headers }) => {
+      const ref = query.get('ref') ?? 'main';
+      const content = files.get(`${ref}:${params.path}`);
+      const entry = (path: string, type: string) => ({
+        ...example<Json[]>(
+          'github',
+          'content-file-response-if-content-is-a-directory',
+        )[0],
+        type,
+        name: path.split('/').pop(),
+        path,
+      });
+
+      if (content === undefined) {
+        const children = [...files.keys()]
+          .filter((key) => key.startsWith(`${ref}:${params.path}/`))
+          .map((key) => entry(key.slice(ref.length + 1), 'file'));
+        return children.length ? { body: children } : fake.notFound();
+      }
+      if (headers.get('accept')?.includes('raw')) return { text: content };
+
+      const bytes = Buffer.byteLength(content);
+      const large = bytes > largeFileBytes;
+      return {
+        body: {
+          ...example<Json>(
+            'github',
+            'content-file-response-if-content-is-a-file',
+          ),
+          name: params.path.split('/').pop(),
+          path: params.path,
+          size: bytes,
+          encoding: large ? 'none' : 'base64',
+          // GitHub wraps base64 at 60 characters.
+          content: large
+            ? ''
+            : Buffer.from(content)
+                .toString('base64')
+                .replace(/(.{60})/g, '$1\n'),
+        },
+      };
+    },
   );
 
   fake.route('GET /repos/{owner}/{repo}/issues', ({ query }) => {
@@ -365,5 +417,5 @@ export function fakeGithub({
     ({ params, query }) => fake.page(statuses.get(params.ref) ?? [], query),
   );
 
-  return { fake, issues, pulls, comments, newIssue, newPull, repoUrl };
+  return { fake, issues, pulls, comments, newIssue, newPull, setFile, repoUrl };
 }

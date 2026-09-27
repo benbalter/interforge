@@ -27,14 +27,15 @@ for (const comment of await issue.getComments()) {
 
 ## What's supported
 
-|                                                                                | GitHub | GitLab            |
-| ------------------------------------------------------------------------------ | ------ | ----------------- |
-| Projects: get, from URL, exists                                                | ✓      | ✓ (nested groups) |
-| Issues: list/filter, get, create, close, title/description, labels, assignees  | ✓      | ✓                 |
-| Comments on issues and PRs/MRs: list/filter, get, create, edit                 | ✓      | ✓                 |
-| Pull/merge requests: list by status, get, create, update, close, merge, labels | ✓      | ✓                 |
-| Commit statuses: set, list, PR head statuses                                   | ✓      | ✓                 |
-| Current user                                                                   | ✓      | ✓                 |
+|                                                                                | GitHub                    | GitLab            |
+| ------------------------------------------------------------------------------ | ------------------------- | ----------------- |
+| Projects: get, from URL, exists                                                | ✓                         | ✓ (nested groups) |
+| Issues: list/filter, get, create, close, title/description, labels, assignees  | ✓                         | ✓                 |
+| Comments on issues and PRs/MRs: list/filter, get, create, edit                 | ✓                         | ✓                 |
+| Pull/merge requests: list by status, get, create, update, close, merge, labels | ✓                         | ✓                 |
+| Commit statuses: set, list, PR head statuses                                   | ✓                         | ✓                 |
+| File contents at a branch, tag or commit                                       | ✓ (incl. files over 1 MB) | ✓                 |
+| Current user                                                                   | ✓                         | ✓                 |
 
 Differences are explicit: something one forge can't do throws `OperationNotSupported` instead of silently doing less. For example, GitHub has no private issues, and GitLab Free drops extra assignees without reporting an error.
 
@@ -70,6 +71,7 @@ The upstream problems found so far, each fixed by an overlay in `spec/<forge>/ov
 - **GitLab** list endpoints (`GET …/issues`, `…/merge_requests`, `…/notes`, `…/statuses`, `/users`) are declared to return a single object, not an array.
 - **GitLab** `assignees` and `reviewers` are declared as a single user, not an array.
 - **GitLab** marks no properties as `required` and misses nullable fields (`description`, `closed_at`, `merged_at`, `source_project_id`, …). Overlay 03 declares the fields forgewright relies on. That list was checked against live gitlab.com projects, issues, merge requests and users, but not yet notes or statuses.
+- **GitLab**'s repository file endpoint has no response schema at all.
 - **GitHub** marks `issue.pull_request.merged_at` as non-nullable, but the API returns `null` for unmerged pull requests.
 - **GitHub**'s bundled examples lag its schemas. For example, `full-repository` lacks `language`, and labels lack `archived_at`. These examples are only used in tests, which patch them.
 
@@ -94,7 +96,7 @@ npm run specs:bump   # move pins to the latest upstream descriptions
 ## Verified so far
 
 - The unit and conformance tests all run against the fakes.
-- A read-only run against real data: `benbalter/word-to-markdown` on GitHub, and `gitlab-org/api/client-go` on gitlab.com anonymously. It covered project lookup (including nested-group `%2F` encoding), issue and PR/MR lists with `Link` pagination, comma-separated label filters, PRs being left out of GitHub issue lists, GitHub comments, and merged-status filtering.
+- A read-only run against real data: `benbalter/word-to-markdown` on GitHub, and `gitlab-org/api/client-go` on gitlab.com anonymously. It covered project lookup (including nested-group `%2F` encoding), issue and PR/MR lists with `Link` pagination, comma-separated label filters, file contents (nested paths and refs), PRs being left out of GitHub issue lists, GitHub comments, and merged-status filtering.
 - Not verified live yet: anything that writes, and GitLab notes and commit statuses. gitlab.com answers `401` for those without a token, even on public projects.
 - Anonymous gitlab.com requests get a reduced project view without `issues_enabled`. `hasIssues` then defaults to `true`.
 
@@ -102,4 +104,4 @@ npm run specs:bump   # move pins to the latest upstream descriptions
 
 - Record fixtures from a scratch GitHub repo and gitlab.com project with tokens, covering writes, notes and statuses.
 - Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto forgewright on a branch and run it against GitLab.
-- Deferred, following ogr's layout: releases, files and branches, forks, access control, reactions, commit comments, Forgejo, and GitHub App auth.
+- See [ROADMAP.md](ROADMAP.md) for the path to full ogr parity and more forges.

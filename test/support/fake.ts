@@ -7,10 +7,17 @@ export type Json = Record<string, unknown>;
 export interface RouteContext {
   params: Record<string, string>;
   query: URLSearchParams;
+  headers: Headers;
   body: Json | undefined;
 }
 
-export type Reply = { status?: number; body?: unknown; headers?: HeadersInit };
+export type Reply = {
+  status?: number;
+  body?: unknown;
+  /** A non-JSON body (raw media types). Not validated. */
+  text?: string;
+  headers?: HeadersInit;
+};
 
 /**
  * Shared plumbing for the fake forges: turns `METHOD /path/{param}` routes
@@ -51,6 +58,7 @@ export class FakeForge {
         const reply = resolve({
           params: decoded,
           query: new URL(request.url).searchParams,
+          headers: request.headers,
           body,
         });
         const status = reply.status ?? 200;
@@ -58,6 +66,12 @@ export class FakeForge {
           this.validate(() =>
             assertResponse(this.forge, method, path, status, reply.body),
           );
+        }
+        if (reply.text !== undefined) {
+          return new HttpResponse(reply.text, {
+            status,
+            headers: reply.headers,
+          });
         }
         return reply.body === undefined
           ? new HttpResponse(null, { status, headers: reply.headers })
