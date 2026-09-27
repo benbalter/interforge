@@ -1,0 +1,28 @@
+{
+  "$comment": "Source description and the operations forgewright relies on. Overlays in ./overlays are applied first. Run `npm run specs:update` after editing.",
+  "source": "https://gitlab.com/gitlab-org/gitlab/-/raw/v19.4.1-ee/doc/api/openapi/openapi_v3.yaml",
+  "operations": [
+    "GET /api/v4/user",
+    "GET /api/v4/users",
+    "GET /api/v4/projects/{id}",
+    "GET /api/v4/projects/{id}/issues",
+    "POST /api/v4/projects/{id}/issues",
+    "GET /api/v4/projects/{id}/issues/{issue_iid}",
+    "PUT /api/v4/projects/{id}/issues/{issue_iid}",
+    "GET /api/v4/projects/{id}/issues/{noteable_id}/notes",
+    "POST /api/v4/projects/{id}/issues/{noteable_id}/notes",
+    "GET /api/v4/projects/{id}/issues/{noteable_id}/notes/{note_id}",
+    "PUT /api/v4/projects/{id}/issues/{noteable_id}/notes/{note_id}",
+    "GET /api/v4/projects/{id}/merge_requests",
+    "POST /api/v4/projects/{id}/merge_requests",
+    "GET /api/v4/projects/{id}/merge_requests/{merge_request_iid}",
+    "PUT /api/v4/projects/{id}/merge_requests/{merge_request_iid}",
+    "PUT /api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge",
+    "GET /api/v4/projects/{id}/merge_requests/{noteable_id}/notes",
+    "POST /api/v4/projects/{id}/merge_requests/{noteable_id}/notes",
+    "GET /api/v4/projects/{id}/merge_requests/{noteable_id}/notes/{note_id}",
+    "PUT /api/v4/projects/{id}/merge_requests/{noteable_id}/notes/{note_id}",
+    "POST /api/v4/projects/{id}/statuses/{sha}",
+    "GET /api/v4/projects/{id}/repository/commits/{sha}/statuses"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$comment": "Source description and the operations forgewright relies on. Run `npm run specs:update` after editing.",
+  "source": "https://raw.githubusercontent.com/github/rest-api-description/c6721f32a17a71397ae46be21be90d7f1a173b6e/descriptions/api.github.com/api.github.com.2026-03-10.json",
+  "apiVersion": "2026-03-10",
+  "operations": [
+    "GET /user",
+    "GET /repos/{owner}/{repo}",
+    "GET /repos/{owner}/{repo}/issues",
+    "POST /repos/{owner}/{repo}/issues",
+    "GET /repos/{owner}/{repo}/issues/{issue_number}",
+    "PATCH /repos/{owner}/{repo}/issues/{issue_number}",
+    "GET /repos/{owner}/{repo}/issues/{issue_number}/comments",
+    "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
+    "GET /repos/{owner}/{repo}/issues/comments/{comment_id}",
+    "PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}",
+    "POST /repos/{owner}/{repo}/issues/{issue_number}/labels",
+    "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees",
+    "GET /repos/{owner}/{repo}/pulls",
+    "POST /repos/{owner}/{repo}/pulls",
+    "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+    "PATCH /repos/{owner}/{repo}/pulls/{pull_number}",
+    "PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge",
+    "POST /repos/{owner}/{repo}/statuses/{sha}",
+    "GET /repos/{owner}/{repo}/commits/{ref}/statuses"
+  ]
+}

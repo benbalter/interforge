@@ -1,0 +1,57 @@
+{
+  "name": "forgewright",
+  "version": "0.0.0",
+  "private": true,
+  "description": "One TypeScript API for many git forges (GitHub, GitLab), modeled on packit/ogr and generated from each forge's OpenAPI description.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "specs:update": "tsx scripts/update-specs.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint . && prettier --check .",
+    "fix": "eslint --fix . && prettier --write .",
+    "all": "npm run fix && npm run typecheck && npm test && npm run build",
+    "coverage": "vitest run --coverage"
+  },
+  "author": "Ben Balter",
+  "license": "MIT",
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "24.19.0",
+    "@vitest/coverage-v8": "5.0.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "msw": "2.15.0",
+    "openapi-format": "1.33.7",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benbalter/forgewright.git"
+  }
+}

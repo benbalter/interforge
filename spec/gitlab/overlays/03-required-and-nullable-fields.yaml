@@ -1,0 +1,100 @@
+# The generated description marks no property as required, and misses nulls
+# the API returns for empty values. Declare what forgewright relies on, so the
+# generated types are accurate. Recorded fixtures are validated against this,
+# which keeps these claims honest.
+overlay: 1.0.0
+info:
+  title: GitLab required and nullable fields
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.APIEntitiesUserBasic
+    update:
+      required: [id, username, web_url]
+  - target: $.components.schemas.APIEntitiesUserPublic
+    update:
+      required: [id, username, web_url]
+  - target: $.components.schemas.APIEntitiesProjectsWithAccessAndCatalogSetting
+    update:
+      required: [id, path, path_with_namespace, web_url, visibility]
+  - target: $.components.schemas.APIEntitiesProjectsWithAccessAndCatalogSetting.properties.description
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesProjectsWithAccessAndCatalogSetting.properties.default_branch
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesIssue
+    update:
+      required:
+        [id, iid, title, state, web_url, author, created_at, labels, assignees]
+  - target: $.components.schemas.APIEntitiesIssue.properties.description
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesIssue.properties.closed_at
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequest
+    update:
+      required:
+        [
+          id,
+          iid,
+          title,
+          state,
+          web_url,
+          author,
+          created_at,
+          labels,
+          source_branch,
+          target_branch,
+          source_project_id,
+          target_project_id,
+          sha,
+        ]
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties.description
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties.merged_at
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties.closed_at
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic
+    update:
+      required:
+        [
+          id,
+          iid,
+          title,
+          state,
+          web_url,
+          author,
+          created_at,
+          labels,
+          source_branch,
+          target_branch,
+          source_project_id,
+          target_project_id,
+          sha,
+        ]
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.description
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.merged_at
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.closed_at
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesNote
+    update:
+      required: [id, body, author, created_at, updated_at, system]
+  - target: $.components.schemas.APIEntitiesCommitStatus
+    update:
+      required: [id, sha, status, name, created_at]
+  - target: $.components.schemas.APIEntitiesCommitStatus.properties.target_url
+    update:
+      nullable: true
+  - target: $.components.schemas.APIEntitiesCommitStatus.properties.description
+    update:
+      nullable: true

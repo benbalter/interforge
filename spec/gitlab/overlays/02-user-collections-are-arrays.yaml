@@ -1,0 +1,43 @@
+# `assignees` and `reviewers` are collections of users, but the generated
+# description declares a single user.
+overlay: 1.0.0
+info:
+  title: GitLab user collections are arrays
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.APIEntitiesIssue.properties.assignees
+    remove: true
+  - target: $.components.schemas.APIEntitiesIssue.properties
+    update:
+      assignees:
+        type: array
+        items:
+          $ref: '#/components/schemas/APIEntitiesUserBasic'
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties.assignees
+    remove: true
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties.reviewers
+    remove: true
+  - target: $.components.schemas.APIEntitiesMergeRequest.properties
+    update:
+      assignees:
+        type: array
+        items:
+          $ref: '#/components/schemas/APIEntitiesUserBasic'
+      reviewers:
+        type: array
+        items:
+          $ref: '#/components/schemas/APIEntitiesUserBasic'
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.assignees
+    remove: true
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.reviewers
+    remove: true
+  - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties
+    update:
+      assignees:
+        type: array
+        items:
+          $ref: '#/components/schemas/APIEntitiesUserBasic'
+      reviewers:
+        type: array
+        items:
+          $ref: '#/components/schemas/APIEntitiesUserBasic'
