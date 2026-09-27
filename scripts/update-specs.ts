@@ -50,6 +50,12 @@ async function applyOverlays(doc: Doc, dir: string): Promise<Doc> {
   return doc;
 }
 
+/**
+ * Keeps only the listed operations. Custom on purpose: openapi-format's
+ * `inverseOperationIds` filter also deletes schema properties named after
+ * HTTP methods (e.g. `head` in GitHub's create-pull-request body), as of
+ * openapi-format 1.33.7.
+ */
 function keepOperations(doc: Doc, operations: string[]): Doc {
   const wanted = new Map<string, Set<string>>();
   for (const op of operations) {

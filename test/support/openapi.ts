@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { Ajv, type ValidateFunction } from 'ajv';
 import addFormatsModule from 'ajv-formats';
+import { OpenAPIBackend } from 'openapi-backend';
+import { sample as openapiSample } from 'openapi-sampler';
 import type { Forge } from '../../src/abstract/errors.js';
 
 // ajv-formats is CommonJS with a default export.
@@ -15,19 +16,26 @@ export const specs: Record<Forge, Json> = {
 };
 
 /**
- * OpenAPI 3.0 schemas aren't quite JSON Schema: `nullable: true` has to become
- * a `null` type (or an anyOf when there's no `type` to extend).
+ * OpenAPI 3.0's `nullable` as JSON Schema null types, which Ajv understands.
+ * Custom because no library converts it correctly when there's no `type`
+ * beside it (GitHub puts it next to `allOf` and `oneOf`): openapi-format's
+ * 3.1 conversion and @openapi-contrib/openapi-schema-to-json-schema drop it on
+ * both, and @scalar/openapi-upgrader drops it on `oneOf`.
  */
-function toJsonSchema(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(toJsonSchema);
+function convertNullable(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(convertNullable);
   if (!node || typeof node !== 'object') return node;
 
   const { nullable, ...rest } = node as Json;
+  // Only the boolean keyword; a property *named* nullable is a schema object.
+  const keyword = typeof nullable === 'boolean';
   const schema = Object.fromEntries(
-    Object.entries(rest).map(([key, value]) => [key, toJsonSchema(value)]),
+    Object.entries(keyword ? rest : (node as Json)).map(([key, value]) => [
+      key,
+      convertNullable(value),
+    ]),
   );
-  if (nullable !== true)
-    return nullable === undefined ? schema : { ...schema, nullable };
+  if (nullable !== true) return schema;
   if (typeof schema.type === 'string') {
     return {
       ...schema,
@@ -38,41 +46,52 @@ function toJsonSchema(node: unknown): unknown {
   return { anyOf: [schema, { type: 'null' }] };
 }
 
-const ajv = new Ajv({ strict: false, allErrors: true, logger: false });
-addFormats(ajv);
-for (const [forge, spec] of Object.entries(specs)) {
-  ajv.addSchema(toJsonSchema(spec) as Json, forge);
+/**
+ * Validators from openapi-backend. The document keeps its 3.0 label, which
+ * openapi-backend needs, and `quick` skips checking the converted document
+ * itself.
+ */
+async function validator(spec: Json) {
+  const data = convertNullable(spec) as Json;
+  const api = new OpenAPIBackend({
+    definition: { ...data, openapi: spec.openapi } as never,
+    quick: true,
+    validate: true,
+    ajvOpts: { strict: false, allErrors: true },
+    customizeAjv: (ajv) => {
+      addFormats(ajv);
+      return ajv;
+    },
+  });
+  await api.init();
+  return api;
 }
 
-const cache = new Map<string, ValidateFunction | null>();
+const validators = {
+  github: await validator(specs.github),
+  gitlab: await validator(specs.gitlab),
+};
 
-/** Point local refs (#/components/…) at the spec registered under `forge`. */
-function rebase(schema: unknown, forge: Forge): unknown {
-  return JSON.parse(
-    JSON.stringify(schema).replaceAll('"$ref":"#/', `"$ref":"${forge}#/`),
-  );
-}
-
-function operation(forge: Forge, method: string, path: string): Json {
+function operationId(forge: Forge, method: string, path: string): string {
   const item = (specs[forge].paths as Record<string, Json>)[path];
-  const op = item?.[method.toLowerCase()] as Json | undefined;
-  if (!op) throw new Error(`${forge}: ${method} ${path} is not in the spec`);
-  return op;
+  const op = item?.[method.toLowerCase()] as
+    { operationId?: string } | undefined;
+  if (!op?.operationId)
+    throw new Error(`${forge}: ${method} ${path} is not in the spec`);
+  return op.operationId;
 }
 
-function compile(key: string, forge: Forge, schema: unknown) {
-  if (!cache.has(key)) {
-    cache.set(
-      key,
-      schema ? ajv.compile(toJsonSchema(rebase(schema, forge)) as Json) : null,
-    );
-  }
-  return cache.get(key)!;
-}
-
-function check(validate: ValidateFunction | null, body: unknown, what: string) {
-  if (validate && !validate(body)) {
-    const errors = ajv.errorsText(validate.errors, { separator: '\n  ' });
+function check(
+  result: {
+    valid: boolean;
+    errors?: { instancePath: string; message?: string }[] | null;
+  },
+  what: string,
+) {
+  if (!result.valid) {
+    const errors = (result.errors ?? [])
+      .map((e) => `${e.instancePath || '(root)'} ${e.message}`)
+      .join('\n  ');
     throw new Error(
       `${what} does not match the OpenAPI description:\n  ${errors}`,
     );
@@ -87,33 +106,38 @@ export function assertResponse(
   status: number,
   body: unknown,
 ) {
-  const responses = operation(forge, method, path).responses as Json;
-  const response = (responses[String(status)] ?? responses.default) as
-    Json | undefined;
-  if (!response) {
-    throw new Error(`${forge}: ${method} ${path} doesn't document a ${status}`);
-  }
-  const schema = (response.content as Json | undefined)?.[
-    'application/json'
-  ] as Json | undefined;
-  const key = `${forge} ${method} ${path} ${status}`;
-  check(compile(key, forge, schema?.schema), body, `Response to ${key}`);
+  const id = operationId(forge, method, path);
+  check(
+    validators[forge].validateResponse(body, id, status),
+    `Response to ${forge} ${method} ${path} ${status}`,
+  );
 }
 
-/** Throws unless `body` matches the documented request body for this operation. */
+/** Throws unless the request (path, query and body) matches the operation. */
 export function assertRequest(
   forge: Forge,
   method: string,
   path: string,
-  body: unknown,
+  request: { url: URL; headers: Headers; body: unknown },
 ) {
-  const requestBody = operation(forge, method, path).requestBody as
-    Json | undefined;
-  const schema = (requestBody?.content as Json | undefined)?.[
-    'application/json'
-  ] as Json | undefined;
-  const key = `${forge} ${method} ${path} request`;
-  check(compile(key, forge, schema?.schema), body, `Request body for ${key}`);
+  const query: Record<string, string | string[]> = {};
+  for (const key of new Set(request.url.searchParams.keys())) {
+    const values = request.url.searchParams.getAll(key);
+    query[key] = values.length > 1 ? values : values[0];
+  }
+  check(
+    validators[forge].validateRequest(
+      {
+        method,
+        path: request.url.pathname,
+        query,
+        headers: Object.fromEntries(request.headers),
+        body: request.body,
+      },
+      operationId(forge, method, path),
+    ),
+    `Request for ${forge} ${method} ${path}`,
+  );
 }
 
 /** A copy of one of the spec's named examples (GitHub ships these). */
@@ -127,49 +151,14 @@ export function example<T = Json>(forge: Forge, name: string): T {
 }
 
 /**
- * Builds a sample object for a named schema from the spec's property-level
- * `example`s, filling required properties that have none. GitLab's description
- * has no named examples, so its fakes start from these.
+ * A sample object for a named schema, from openapi-sampler: required
+ * properties, using the description's examples where it has them. GitLab's
+ * description has no named examples, so its fakes start from these.
  */
 export function sample<T = Json>(forge: Forge, schemaName: string): T {
-  const schemas = (specs[forge].components as Json).schemas as Record<
-    string,
-    Json
-  >;
-  const resolve = (schema: Json): Json =>
-    typeof schema.$ref === 'string'
-      ? resolve(schemas[schema.$ref.split('/').pop()!])
-      : schema;
-
-  const build = (input: Json, depth: number): unknown => {
-    const schema = resolve(input);
-    if (schema.example !== undefined) return structuredClone(schema.example);
-    if (schema.nullable) return null;
-    const variant = ((schema.oneOf ?? schema.anyOf) as Json[] | undefined)?.[0];
-    if (variant) return build(variant, depth);
-    switch (schema.type) {
-      case 'array':
-        return [];
-      case 'integer':
-      case 'number':
-        return 1;
-      case 'boolean':
-        return false;
-      case 'string':
-        return schema.format === 'date-time' ? '2026-01-01T00:00:00.000Z' : '';
-    }
-    if (depth > 3) return {};
-    const required = new Set((schema.required as string[] | undefined) ?? []);
-    const result: Json = {};
-    for (const [key, prop] of Object.entries(
-      (schema.properties as Record<string, Json> | undefined) ?? {},
-    )) {
-      if (required.has(key) || resolve(prop).example !== undefined) {
-        result[key] = build(prop, depth + 1);
-      }
-    }
-    return result;
-  };
-
-  return build({ $ref: `#/components/schemas/${schemaName}` }, 0) as T;
+  return openapiSample(
+    { $ref: `#/components/schemas/${schemaName}` },
+    { skipNonRequired: true, skipReadOnly: false },
+    specs[forge],
+  ) as T;
 }

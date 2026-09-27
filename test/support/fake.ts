@@ -1,8 +1,23 @@
-import { http, HttpResponse, type HttpHandler } from 'msw';
+import { HttpResponse, type HttpHandler } from 'msw';
+import { createOpenApiHttp } from 'openapi-msw';
 import type { Forge } from '../../src/abstract/errors.js';
 import { assertRequest, assertResponse } from './openapi.js';
 
 export type Json = Record<string, unknown>;
+
+type Method = 'get' | 'put' | 'post' | 'patch' | 'delete';
+
+/**
+ * `METHOD /path` for every operation in a generated `paths` type, so a route
+ * the description doesn't have fails to compile.
+ */
+export type Operation<Paths> = {
+  [P in keyof Paths & string]: {
+    [M in keyof Paths[P] & Method]: [Paths[P][M]] extends [undefined]
+      ? never
+      : `${Uppercase<M>} ${P}`;
+  }[keyof Paths[P] & Method];
+}[keyof Paths & string];
 
 export interface RouteContext {
   params: Record<string, string>;
@@ -20,12 +35,17 @@ export type Reply = {
 };
 
 /**
- * Shared plumbing for the fake forges: turns `METHOD /path/{param}` routes
- * into msw handlers, and checks every request body and response body against
- * the forge's OpenAPI description. Mismatches are collected in `violations`,
- * which tests assert is empty.
+ * Shared plumbing for the fake forges: registers `METHOD /path/{param}` routes
+ * as msw handlers through openapi-msw (typed by the forge's generated
+ * `paths`), and checks every request and response against the forge's
+ * OpenAPI description. Mismatches are collected in `violations`, which tests
+ * assert is empty. Bodies are checked at runtime rather than typed, since
+ * fakes build them from spec examples.
  */
-export class FakeForge {
+/** Any forge's fake, for code that doesn't register routes. */
+export type AnyFakeForge = Omit<FakeForge, 'route'>;
+
+export class FakeForge<Paths extends object = object> {
   readonly handlers: HttpHandler[] = [];
   readonly violations: string[] = [];
   /** Items per page on list endpoints, to exercise pagination. */
@@ -37,18 +57,34 @@ export class FakeForge {
   /** How many requests reached the fake. */
   requests = 0;
 
+  // Stored loosely so FakeForge<paths> fits wherever any FakeForge does.
+  private http: Record<Method, unknown>;
+
   constructor(
     readonly forge: Forge,
     readonly baseUrl: string,
-  ) {}
+  ) {
+    this.http = createOpenApiHttp<Paths>({ baseUrl }) as unknown as Record<
+      Method,
+      unknown
+    >;
+  }
 
-  route(operation: string, resolve: (ctx: RouteContext) => Reply) {
+  route(operation: Operation<Paths>, resolve: (ctx: RouteContext) => Reply) {
     const [method, path] = operation.split(' ');
-    const mswPath = this.baseUrl + path.replace(/\{(\w+)\}/g, ':$1');
-    const verb = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch';
+    const verb = method.toLowerCase() as Method;
+    // Typing is enforced by Operation<Paths>; openapi-msw's per-path resolver
+    // types can't follow a runtime method name.
+    const register = this.http[verb] as unknown as (
+      path: string,
+      resolver: (info: {
+        request: Request;
+        params: Record<string, unknown>;
+      }) => unknown,
+    ) => HttpHandler;
 
     this.handlers.push(
-      http[verb](mswPath, async ({ request, params }) => {
+      register(path, async ({ request, params }) => {
         this.requests++;
         const headers = new Headers(this.rateLimitHeaders());
         const interruption = this.interruptions.shift();
@@ -64,8 +100,12 @@ export class FakeForge {
 
         const text = await request.text();
         const body = text ? (JSON.parse(text) as Json) : undefined;
-        this.validate(
-          () => body && assertRequest(this.forge, method, path, body),
+        this.validate(() =>
+          assertRequest(this.forge, method, path, {
+            url: new URL(request.url),
+            headers: request.headers,
+            body,
+          }),
         );
 
         const decoded = Object.fromEntries(

@@ -1,3 +1,4 @@
+import type { paths } from '../../src/services/gitlab/openapi.js';
 import { FakeForge, type Json } from './fake.js';
 import { sample } from './openapi.js';
 
@@ -27,7 +28,7 @@ export function fakeGitlab({
   maxAssignees = 1,
   honorActivityFilter = true,
 }: Options = {}) {
-  const fake = new FakeForge('gitlab', instanceUrl);
+  const fake = new FakeForge<paths>('gitlab', instanceUrl);
   const issues = new Map<number, Json>();
   const mergeRequests = new Map<number, Json>();
   const notes = {

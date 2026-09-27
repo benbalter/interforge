@@ -110,18 +110,29 @@ Runtime dependencies:
 - [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) for the typed HTTP client.
 - [ky](https://github.com/sindresorhus/ky) for retries, backoff, jitter and timeouts.
 - [http-link-header](https://github.com/jhermsmeier/node-http-link-header) for pagination links.
+- [git-url-parse](https://github.com/IonicaBizau/git-url-parse) for project URLs.
 
-Build and test tooling: openapi-format (overlays and filtering), openapi-typescript, msw, Ajv.
+Build and test tooling:
 
-Custom code is kept where no suitable library fits:
+- openapi-format and openapi-typescript build the specs and types.
+- msw with [openapi-msw](https://github.com/christoph-fricke/openapi-msw) runs the fakes. A misspelled fake route fails to compile.
+- [openapi-backend](https://github.com/openapistack/openapi-backend) validates every request and response against the spec.
+- [openapi-sampler](https://github.com/Redocly/openapi-sampler) builds sample objects from the spec.
 
-- The forge-specific rate-limit rules, which ky can't express: GitHub's 403 limits, and failing fast instead of capping the wait.
-- The rate-limit header parser. The only one on npm, `ratelimit-header-parser`, is a 2023 0.1.0 release.
-- The mappers between each forge's shapes and the model.
+Custom code is kept only where no suitable library exists:
+
+| Custom code                                                  | Why                                                                                                                                                                                                            |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forge-specific rate-limit rules                              | ky can't express GitHub's 403 limits, or failing fast instead of capping the wait.                                                                                                                             |
+| Rate-limit header parser                                     | The only one on npm (`ratelimit-header-parser`) is an unmaintained 0.1.0 release from 2023.                                                                                                                    |
+| Keeping only the used operations (`scripts/update-specs.ts`) | openapi-format's `inverseOperationIds` also deletes schema properties named after HTTP methods, such as `head` in GitHub's create-PR body.                                                                     |
+| Converting `nullable` for the test validator                 | openapi-format's 3.1 conversion and `@openapi-contrib/openapi-schema-to-json-schema` drop `nullable` next to `allOf`/`oneOf`, and `@scalar/openapi-upgrader` drops it next to `oneOf`. GitHub's spec has both. |
+| Recognizing GitHub sub-page URLs (`…/pull/7/files`)          | git-url-parse reads these as part of the repository path.                                                                                                                                                      |
+| Mappers and comment filtering                                | This is the library's own logic.                                                                                                                                                                               |
 
 ### Tests run against spec-validated fakes
 
-`test/support/fake-{github,gitlab}.ts` are small stateful fakes built on [msw](https://mswjs.io/). GitHub's fake starts from the examples in GitHub's description. GitLab's is sampled from the property examples in GitLab's description. **Every request body and response they handle is validated against the OpenAPI description**, so a fake that drifts from the spec, or a mapper that sends the wrong shape, fails the test.
+`test/support/fake-{github,gitlab}.ts` are small stateful fakes built on [msw](https://mswjs.io/). GitHub's fake starts from the examples in GitHub's description. GitLab's is sampled from the property examples in GitLab's description. **Every request (path, query and body) and every response they handle is validated against the OpenAPI description**, so a fake that drifts from the spec, or a mapper that sends the wrong shape, fails the test.
 
 - `test/conformance/` has one suite that runs unchanged against both forges.
 - `test/services/` covers forge-specific behavior: GitLab system notes, nested groups, the assignee limit on Free, and GitHub pull requests appearing in issue lists.

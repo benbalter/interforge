@@ -4,12 +4,12 @@ import type { Forge } from '../../src/abstract/errors.js';
 import type { GitService, ProjectRef } from '../../src/abstract/service.js';
 import { GithubService } from '../../src/services/github/service.js';
 import { GitlabService } from '../../src/services/gitlab/service.js';
-import type { FakeForge } from './fake.js';
+import type { AnyFakeForge } from './fake.js';
 import { fakeGithub } from './fake-github.js';
 import { fakeGitlab } from './fake-gitlab.js';
 
 export const server = setupServer();
-const active: FakeForge[] = [];
+const active: AnyFakeForge[] = [];
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
@@ -24,7 +24,7 @@ export interface Harness {
   service: GitService;
   ref: ProjectRef;
   projectUrl: string;
-  fake: FakeForge;
+  fake: AnyFakeForge;
   setFile: (path: string, content: string, ref?: string) => void;
 }
 
@@ -32,7 +32,7 @@ interface CommonOptions {
   hasIssues?: boolean;
 }
 
-function use(fake: FakeForge) {
+function use(fake: AnyFakeForge) {
   active.push(fake);
   server.use(...fake.handlers);
 }

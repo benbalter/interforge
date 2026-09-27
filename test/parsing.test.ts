@@ -28,6 +28,14 @@ describe('parseGitUrl', () => {
       'group',
       'repo',
     ],
+    ['git+ssh://git@github.com/owner/repo.git', 'github.com', 'owner', 'repo'],
+    [
+      'https://gitlab.example.com:8443/group/sub/repo.git',
+      'gitlab.example.com',
+      'group/sub',
+      'repo',
+    ],
+    ['https://github.com/owner/repo/', 'github.com', 'owner', 'repo'],
   ])('%s', (url, hostname, namespace, repo) => {
     expect(parseGitUrl(url)).toEqual({ hostname, namespace, repo });
   });

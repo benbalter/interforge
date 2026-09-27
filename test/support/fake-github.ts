@@ -1,3 +1,4 @@
+import type { paths } from '../../src/services/github/openapi.js';
 import { FakeForge, type Json } from './fake.js';
 import { example } from './openapi.js';
 
@@ -28,7 +29,7 @@ export function fakeGithub({
   largeFileBytes = 1024 * 1024,
   treeLimit = 100_000,
 }: Options = {}) {
-  const fake = new FakeForge('github', API);
+  const fake = new FakeForge<paths>('github', API);
   const issues = new Map<number, Json>(); // includes PRs, as GitHub does
   const pulls = new Map<number, Json>();
   const comments = new Map<number, Json & { issue_number: number }>();
