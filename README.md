@@ -1,5 +1,8 @@
 # forgewright
 
+> [!WARNING]
+> **Experimental.** forgewright is a prototype: it's private, unpublished, and only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
+
 One TypeScript API for many git forges. Write automation once, and run it against GitHub or GitLab.
 
 ```ts
@@ -21,8 +24,6 @@ for (const comment of await issue.getComments()) {
   console.log(comment.author, comment.body); // system notes ("added ~bug") are left out
 }
 ```
-
-> **Status:** private prototype. Not published to npm, and the API will change.
 
 ## What's supported
 
@@ -62,6 +63,8 @@ src/services/<forge>/openapi.ts   generated types (used by the client)
 
 `npm run specs:update` downloads the pinned descriptions, applies the overlays, keeps only the listed operations and unused-component-pruned schemas, and regenerates the types. It fails if an overlay stops matching (upstream may have fixed the issue) or if a listed operation disappears. CI checks that the generated files are up to date.
 
+A scheduled workflow (`.github/workflows/update-specs.yml`, Mondays and on demand) runs `npm run specs:bump` to move the pins to the latest upstream versions: the newest commit and dated API version of `github/rest-api-description`, and the newest stable GitLab release tag. It then regenerates, runs the typecheck and tests, and opens or updates a pull request with the results. If an overlay stops matching or an operation disappears, the run fails instead, because that needs a person to look at it.
+
 The upstream problems found so far, each fixed by an overlay in `spec/<forge>/overlays/`:
 
 - **GitLab** list endpoints (`GET …/issues`, `…/merge_requests`, `…/notes`, `…/statuses`, `/users`) are declared to return a single object, not an array.
@@ -85,6 +88,7 @@ npm run lint        # eslint + prettier
 npm run typecheck
 npm run build
 npm run specs:update
+npm run specs:bump   # move pins to the latest upstream descriptions
 ```
 
 ## Verified so far

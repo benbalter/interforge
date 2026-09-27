@@ -20,6 +20,7 @@
   },
   "scripts": {
     "specs:update": "tsx scripts/update-specs.ts",
+    "specs:bump": "tsx scripts/bump-spec-pins.ts",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -1,0 +1,94 @@
+name: Update OpenAPI descriptions
+
+# Moves the pinned GitHub and GitLab OpenAPI descriptions to their latest
+# upstream versions, regenerates, and opens (or updates) a pull request.
+on:
+  schedule:
+    - cron: '17 9 * * 1' # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-specs
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: automation/update-openapi-specs
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Bump pins
+        run: npm run specs:bump
+
+      # Fails if an overlay no longer matches or a used operation disappeared.
+      # Both need a person, so let the run fail loudly.
+      - name: Regenerate
+        run: npm run specs:update
+
+      - name: Check for changes
+        id: diff
+        run: |
+          npx prettier --write spec src/services > /dev/null
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pull requests opened with GITHUB_TOKEN don't trigger CI, so run the
+      # checks here and report them in the pull request.
+      - name: Typecheck
+        id: typecheck
+        if: steps.diff.outputs.changed == 'true'
+        continue-on-error: true
+        run: npm run typecheck
+      - name: Test
+        id: test
+        if: steps.diff.outputs.changed == 'true'
+        continue-on-error: true
+        run: npm test
+
+      - name: Open or update pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          TYPECHECK: ${{ steps.typecheck.outcome }}
+          TEST: ${{ steps.test.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$BRANCH"
+          git commit -am 'Update OpenAPI descriptions'
+          git push --force origin "$BRANCH"
+
+          icon() { [ "$1" = success ] && echo '✅' || echo '❌'; }
+          {
+            echo 'Moves the pinned GitHub and GitLab OpenAPI descriptions to their latest upstream versions and regenerates the types.'
+            echo
+            echo '```'
+            git diff --stat HEAD~1 -- spec src
+            echo '```'
+            echo
+            echo "- $(icon "$TYPECHECK") typecheck"
+            echo "- $(icon "$TEST") tests"
+            echo
+            echo "Checks ran in [the workflow]($RUN_URL); CI doesn't run on pull requests opened by GITHUB_TOKEN. A failure usually means an upstream change the mappers or overlays need to handle."
+          } > body.md
+
+          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body-file body.md
+          else
+            gh pr create --head "$BRANCH" --title 'Update OpenAPI descriptions' --body-file body.md
+          fi
