@@ -18,9 +18,10 @@ export const specs: Record<Forge, Json> = {
 /**
  * OpenAPI 3.0's `nullable` as JSON Schema null types, which Ajv understands.
  * Custom because no library converts it correctly when there's no `type`
- * beside it (GitHub puts it next to `allOf` and `oneOf`): openapi-format's
- * 3.1 conversion and @openapi-contrib/openapi-schema-to-json-schema drop it on
- * both, and @scalar/openapi-upgrader drops it on `oneOf`.
+ * beside it (GitHub puts it next to `allOf` and `oneOf`). openapi-format's
+ * 3.1 conversion drops it on `allOf` (thim81/openapi-format#239),
+ * @openapi-contrib/openapi-schema-to-json-schema drops it on both, and
+ * @scalar/openapi-upgrader drops it on `oneOf`.
  */
 function convertNullable(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(convertNullable);
