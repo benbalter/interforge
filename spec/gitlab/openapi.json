@@ -4933,7 +4933,8 @@
           },
           "source_project_id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "target_project_id": {
             "type": "integer",
@@ -5066,8 +5067,6 @@
           "labels",
           "source_branch",
           "target_branch",
-          "source_project_id",
-          "target_project_id",
           "sha"
         ]
       },
@@ -5468,7 +5467,8 @@
           },
           "source_project_id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "target_project_id": {
             "type": "integer",
@@ -5654,8 +5654,6 @@
           "labels",
           "source_branch",
           "target_branch",
-          "source_project_id",
-          "target_project_id",
           "sha"
         ]
       },

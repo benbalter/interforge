@@ -1524,7 +1524,7 @@ export interface components {
             comments: number;
             pull_request?: {
                 /** Format: date-time */
-                merged_at?: string;
+                merged_at?: string | null;
                 /** Format: uri */
                 diff_url: string;
                 /** Format: uri */

@@ -9,7 +9,7 @@ import { GitlabService } from './services/gitlab/service.js';
  * Finds the service for a URL's host and fetches the project, like
  * ogr.get_project().
  */
-export function getProject(
+export async function getProject(
   url: string,
   services: GitService[],
 ): Promise<GitProject> {

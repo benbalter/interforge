@@ -8,7 +8,7 @@ export default tseslint.config(
       'dist/**',
       'coverage/**',
       'node_modules/**',
-      'src/services/*/openapi.d.ts',
+      'src/services/*/openapi.ts',
     ],
   },
   eslint.configs.recommended,

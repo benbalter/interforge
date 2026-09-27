@@ -22,7 +22,7 @@ export abstract class GitService {
   abstract getProject(ref: ProjectRef): Promise<GitProject>;
   abstract getCurrentUser(): Promise<GitUser>;
 
-  getProjectFromUrl(url: string): Promise<GitProject> {
+  async getProjectFromUrl(url: string): Promise<GitProject> {
     const parsed = parseGitUrl(url);
     if (parsed.hostname !== this.hostname) {
       throw new OperationNotSupported(`${url} is not on ${this.hostname}`);

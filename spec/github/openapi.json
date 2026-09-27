@@ -4503,7 +4503,7 @@
               "merged_at": {
                 "type": "string",
                 "format": "date-time",
-                "nullable": false
+                "nullable": true
               },
               "diff_url": {
                 "type": "string",

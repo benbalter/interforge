@@ -591,9 +591,9 @@ export interface components {
             author: components["schemas"]["APIEntitiesUserBasic"];
             assignee?: components["schemas"]["APIEntitiesUserBasic"];
             /** Format: int64 */
-            source_project_id: number;
+            source_project_id?: number | null;
             /** Format: int64 */
-            target_project_id: number;
+            target_project_id?: number;
             labels: string[];
             draft?: boolean;
             imported?: boolean;
@@ -885,9 +885,9 @@ export interface components {
             author: components["schemas"]["APIEntitiesUserBasic"];
             assignee?: components["schemas"]["APIEntitiesUserBasic"];
             /** Format: int64 */
-            source_project_id: number;
+            source_project_id?: number | null;
             /** Format: int64 */
-            target_project_id: number;
+            target_project_id?: number;
             labels: string[];
             draft?: boolean;
             imported?: boolean;

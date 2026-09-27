@@ -1,0 +1,11 @@
+# Fields GitHub's description marks non-nullable that the API returns as null.
+# Confirmed against live responses.
+overlay: 1.0.0
+info:
+  title: GitHub nullable fields
+  version: 1.0.0
+actions:
+  # Null on issues that are open (unmerged) pull requests.
+  - target: $.components.schemas.issue.properties.pull_request.properties.merged_at
+    update:
+      nullable: true

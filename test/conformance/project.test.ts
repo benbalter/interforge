@@ -24,6 +24,9 @@ describe.each(forges)('%s project', (_forge, setup) => {
     const { service, ref, projectUrl } = setup();
     const project = await service.getProjectFromUrl(`${projectUrl}.git`);
     expect(project.fullRepoName).toBe(`${ref.namespace}/${ref.repo}`);
+    await expect(
+      service.getProjectFromUrl('https://example.org/a/b'),
+    ).rejects.toThrow(/not on/);
   });
 
   test('missing projects throw NotFoundError', async () => {

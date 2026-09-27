@@ -57,17 +57,20 @@ spec/gitlab/overlays/*.yaml   OpenAPI Overlays that fix upstream mistakes
         │  npm run specs:update
         ▼
 spec/<forge>/openapi.json     trimmed description (used to validate test traffic)
-src/services/<forge>/openapi.d.ts   generated types (used by the client)
+src/services/<forge>/openapi.ts   generated types (used by the client)
 ```
 
 `npm run specs:update` downloads the pinned descriptions, applies the overlays, keeps only the listed operations and unused-component-pruned schemas, and regenerates the types. It fails if an overlay stops matching (upstream may have fixed the issue) or if a listed operation disappears. CI checks that the generated files are up to date.
 
-The upstream problems found so far, each fixed by an overlay in `spec/gitlab/overlays/`:
+The upstream problems found so far, each fixed by an overlay in `spec/<forge>/overlays/`:
 
 - **GitLab** list endpoints (`GET …/issues`, `…/merge_requests`, `…/notes`, `…/statuses`, `/users`) are declared to return a single object, not an array.
 - **GitLab** `assignees` and `reviewers` are declared as a single user, not an array.
-- **GitLab** marks no properties as `required` and misses nullable fields such as `description`, `closed_at` and `merged_at`.
+- **GitLab** marks no properties as `required` and misses nullable fields (`description`, `closed_at`, `merged_at`, `source_project_id`, …). Overlay 03 declares the fields forgewright relies on. That list was checked against live gitlab.com projects, issues, merge requests and users, but not yet notes or statuses.
+- **GitHub** marks `issue.pull_request.merged_at` as non-nullable, but the API returns `null` for unmerged pull requests.
 - **GitHub**'s bundled examples lag its schemas. For example, `full-repository` lacks `language`, and labels lack `archived_at`. These examples are only used in tests, which patch them.
+
+About 60 more nullability gaps show up in real traffic, almost all in fields forgewright doesn't read (milestones, time stats, `auto_merge`, …). These are left alone until something depends on them.
 
 ### Tests run against spec-validated fakes
 
@@ -84,8 +87,15 @@ npm run build
 npm run specs:update
 ```
 
+## Verified so far
+
+- The unit and conformance tests all run against the fakes.
+- A read-only run against real data: `benbalter/word-to-markdown` on GitHub, and `gitlab-org/api/client-go` on gitlab.com anonymously. It covered project lookup (including nested-group `%2F` encoding), issue and PR/MR lists with `Link` pagination, comma-separated label filters, PRs being left out of GitHub issue lists, GitHub comments, and merged-status filtering.
+- Not verified live yet: anything that writes, and GitLab notes and commit statuses. gitlab.com answers `401` for those without a token, even on public projects.
+- Anonymous gitlab.com requests get a reduced project view without `issues_enabled`. `hasIssues` then defaults to `true`.
+
 ## Next
 
-- Record real fixtures from a scratch GitHub repo and gitlab.com project, and validate them against the descriptions. This will surface the remaining nullability gaps. One to check: `issue.pull_request.merged_at`, which GitHub's description marks as non-nullable.
+- Record fixtures from a scratch GitHub repo and gitlab.com project with tokens, covering writes, notes and statuses.
 - Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto forgewright on a branch and run it against GitLab.
 - Deferred, following ogr's layout: releases, files and branches, forks, access control, reactions, commit comments, Forgejo, and GitHub App auth.

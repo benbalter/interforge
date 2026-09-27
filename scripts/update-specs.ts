@@ -6,7 +6,7 @@
  *   2. apply spec/<forge>/overlays/*.yaml, in order (OpenAPI Overlay)
  *   3. keep only the operations listed in config.json, then prune unused components
  *   4. write spec/<forge>/openapi.json (used to validate fixtures)
- *   5. write src/services/<forge>/openapi.d.ts (used by the typed client)
+ *   5. write src/services/<forge>/openapi.ts (used by the typed client)
  *
  * Fails if an overlay action matches nothing or a listed operation is missing,
  * so upstream fixes and regressions surface here instead of at runtime.
@@ -119,7 +119,7 @@ async function build(forge: string) {
   ].join('\n');
   const ast = await openapiTS(doc as never);
   await writeFile(
-    join('src', 'services', forge, 'openapi.d.ts'),
+    join('src', 'services', forge, 'openapi.ts'),
     header + astToString(ast),
   );
   console.log(`  ${config.operations.length} operations`);

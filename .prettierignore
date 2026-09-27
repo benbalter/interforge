@@ -2,4 +2,4 @@ coverage/
 dist/
 node_modules/
 spec/*/openapi.json
-src/services/*/openapi.d.ts
+src/services/*/openapi.ts

@@ -31,7 +31,9 @@ export async function unwrap<R extends FetchResult>(
 
   const { data, error, response } = result;
   if (error !== undefined || !response.ok) {
-    const message = `${response.status} ${errorMessage(error) ?? response.statusText} (${response.url})`;
+    // GitLab's messages already start with the status ("404 Not Found").
+    const detail = errorMessage(error) ?? response.statusText;
+    const message = `${detail.startsWith(String(response.status)) ? '' : `${response.status} `}${detail} (${response.url})`;
     const ErrorClass = response.status === 404 ? NotFoundError : APIError;
     throw new ErrorClass(message, forge, response.status, error);
   }

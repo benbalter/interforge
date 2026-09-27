@@ -16,9 +16,10 @@ describe('getProject', () => {
     expect(
       (await getProject(`${gl.projectUrl}.git`, services)).fullRepoName,
     ).toBe('octo-org/platform/widgets');
-    expect(() => getProject('https://bitbucket.org/a/b', services)).toThrow(
-      /No service configured for bitbucket.org/,
-    );
+    await expect(
+      getProject('https://bitbucket.org/a/b', services),
+    ).rejects.toThrow(/No service configured for bitbucket.org/);
+    await expect(getProject('not a url', services)).rejects.toThrow();
   });
 });
 
