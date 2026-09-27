@@ -83,6 +83,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v4/projects/{id}/repository/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all repository trees in a project
+         * @description Lists all repository files and directories in a specified project. This endpoint can be accessed without authentication if the repository is publicly accessible. This command provides essentially the same features as the `git ls-tree` command. Use `with_last_commit` to include the last commit that changed each entry. `with_last_commit` cannot be combined with `recursive`.
+         */
+        get: operations["getApiV4ProjectsIdRepositoryTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v4/projects/{id}/issues": {
         parameters: {
             query?: never;
@@ -1244,6 +1264,75 @@ export interface components {
             noteable_iid?: number;
             commands_changes?: Record<string, never>;
         };
+        APIEntitiesCommit: {
+            /** @example 2695effb5807a22ff3d138d593fd856244e155e7 */
+            id?: string;
+            /** @example 2695effb */
+            short_id?: string;
+            /**
+             * Format: date-time
+             * @example 2017-07-26T11:08:53.000+02:00
+             */
+            created_at?: string;
+            /**
+             * @example [
+             *       "2a4b78934375d7f53875269ffd4f45fd83a84ebe"
+             *     ]
+             */
+            parent_ids?: string[];
+            /** @example Initial commit */
+            title?: string;
+            /** @example Initial commit */
+            message?: string;
+            /** @example John Smith */
+            author_name?: string;
+            /** @example john@example.com */
+            author_email?: string;
+            /**
+             * Format: date-time
+             * @example 2012-05-28T04:42:42-07:00
+             */
+            authored_date?: string;
+            /** @example Jack Smith */
+            committer_name?: string;
+            /** @example jack@example.com */
+            committer_email?: string;
+            /**
+             * Format: date-time
+             * @example 2012-05-28T04:42:42-07:00
+             */
+            committed_date?: string;
+            /**
+             * @example {
+             *       "Merged-By": "Jane Doe janedoe@gitlab.com"
+             *     }
+             */
+            trailers?: Record<string, never>;
+            /**
+             * @example {
+             *       "Signed-off-by": [
+             *         "John Doe <johndoe@gitlab.com>",
+             *         "Jane Doe <janedoe@gitlab.com>"
+             *       ]
+             *     }
+             */
+            extended_trailers?: Record<string, never>;
+            /** @example https://gitlab.example.com/janedoe/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746 */
+            web_url?: string;
+        };
+        APIEntitiesTreeObject: {
+            /** @example a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba */
+            id: string;
+            /** @example html */
+            name: string;
+            /** @example tree */
+            type: string;
+            /** @example files/html */
+            path: string;
+            /** @example 040000 */
+            mode: string;
+            last_commit?: components["schemas"]["APIEntitiesCommit"];
+        };
         APIEntitiesContainerExpirationPolicy: {
             cadence?: string;
             enabled?: string;
@@ -2118,6 +2207,78 @@ export interface operations {
                 content?: never;
             };
             /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getApiV4ProjectsIdRepositoryTree: {
+        parameters: {
+            query?: {
+                /**
+                 * @description The name of a repository branch or tag, if not given the default branch is used
+                 * @example main
+                 */
+                ref?: string | null;
+                /**
+                 * @description The path of the tree
+                 * @example files/html
+                 */
+                path?: string | null;
+                /** @description Used to get a recursive tree */
+                recursive?: boolean;
+                /** @description Include the last commit for each tree entry. Cannot be combined with "recursive" */
+                with_last_commit?: boolean;
+                /**
+                 * @description Current page number
+                 * @example 1
+                 */
+                page?: number;
+                /**
+                 * @description Number of items per page
+                 * @example 20
+                 */
+                per_page?: number;
+                /** @description Specify the pagination method ("none" is only valid if "recursive" is true) */
+                pagination?: "legacy" | "keyset" | "none";
+                /**
+                 * @description Record from which to start the keyset pagination
+                 * @example a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba
+                 */
+                page_token?: string | null;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The ID or URL-encoded path of the project
+                 * @example 1
+                 */
+                id: string | number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIEntitiesTreeObject"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 404 Project Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;

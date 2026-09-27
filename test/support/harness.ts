@@ -37,13 +37,16 @@ function use(fake: FakeForge) {
   server.use(...fake.handlers);
 }
 
+// No backoff in tests. Rate-limit tests use `Retry-After: 0`.
+const retry = { baseDelay: 0 };
+
 export function github(options: Parameters<typeof fakeGithub>[0] = {}) {
   const gh = fakeGithub(options);
   use(gh.fake);
   return {
     ...gh,
     forge: 'github' as const,
-    service: new GithubService({ token: 'test-token' }),
+    service: new GithubService({ token: 'test-token', retry }),
     ref: {
       namespace: options.owner ?? 'octo-org',
       repo: options.repo ?? 'widgets',
@@ -64,6 +67,7 @@ export function gitlab(options: Parameters<typeof fakeGitlab>[0] = {}) {
     service: new GitlabService({
       token: 'test-token',
       instanceUrl: options.instanceUrl ?? 'https://gitlab.example.com',
+      retry,
     }),
     ref: { namespace: namespace.reverse().join('/'), repo },
     projectUrl: gl.webUrl,

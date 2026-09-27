@@ -1,6 +1,7 @@
 import { ForgeError } from '../../abstract/errors.js';
 import { GitService, type ProjectRef } from '../../abstract/service.js';
 import { unwrap } from '../../http.js';
+import type { RetryOptions } from '../../retry.js';
 import { createGitlabClient, type GitlabClient } from './client.js';
 import { toProjectData } from './mappers.js';
 import { GitlabProject } from './project.js';
@@ -10,6 +11,8 @@ export interface GitlabServiceOptions {
   /** Defaults to https://gitlab.com. */
   instanceUrl?: string;
   fetch?: typeof globalThis.fetch;
+  /** Retry and rate-limit behavior. `false` turns retries off. */
+  retry?: RetryOptions | false;
 }
 
 export class GitlabService extends GitService {
@@ -22,6 +25,7 @@ export class GitlabService extends GitService {
     token,
     instanceUrl = 'https://gitlab.com',
     fetch,
+    retry,
   }: GitlabServiceOptions = {}) {
     super();
     this.instanceUrl = instanceUrl.replace(/\/$/, '');
@@ -29,6 +33,8 @@ export class GitlabService extends GitService {
       instanceUrl: this.instanceUrl,
       token,
       fetch,
+      retry,
+      onRateLimit: this.observeRateLimit,
     });
   }
 
@@ -40,6 +46,15 @@ export class GitlabService extends GitService {
       }),
     );
     return new GitlabProject(toProjectData(data), this);
+  }
+
+  /**
+   * GitLab has no rate limit endpoint, so this reports the `RateLimit-*`
+   * headers from the last response. Null before any request, or when the
+   * instance doesn't send them.
+   */
+  async getRateLimitRemaining() {
+    return this.rateLimit?.remaining ?? null;
   }
 
   async getCurrentUser() {

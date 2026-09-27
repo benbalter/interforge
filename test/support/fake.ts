@@ -30,6 +30,12 @@ export class FakeForge {
   readonly violations: string[] = [];
   /** Items per page on list endpoints, to exercise pagination. */
   pageSize = 100;
+  /** Replies served (in order) before the real handlers, e.g. rate limits. */
+  readonly interruptions: Reply[] = [];
+  /** Sent as rate limit headers on every response, in the forge's style. */
+  rateLimit?: { limit: number; remaining: number; reset: number };
+  /** How many requests reached the fake. */
+  requests = 0;
 
   constructor(
     readonly forge: Forge,
@@ -43,6 +49,19 @@ export class FakeForge {
 
     this.handlers.push(
       http[verb](mswPath, async ({ request, params }) => {
+        this.requests++;
+        const headers = new Headers(this.rateLimitHeaders());
+        const interruption = this.interruptions.shift();
+        if (interruption) {
+          new Headers(interruption.headers).forEach((v, k) =>
+            headers.set(k, v),
+          );
+          return HttpResponse.json(interruption.body ?? {}, {
+            status: interruption.status,
+            headers,
+          });
+        }
+
         const text = await request.text();
         const body = text ? (JSON.parse(text) as Json) : undefined;
         this.validate(
@@ -62,6 +81,7 @@ export class FakeForge {
           body,
         });
         const status = reply.status ?? 200;
+        new Headers(reply.headers).forEach((v, k) => headers.set(k, v));
         if (status < 300 && reply.body !== undefined) {
           this.validate(() =>
             assertResponse(this.forge, method, path, status, reply.body),
@@ -70,13 +90,24 @@ export class FakeForge {
         if (reply.text !== undefined) {
           return new HttpResponse(reply.text, {
             status,
-            headers: reply.headers,
+            headers,
           });
         }
         return reply.body === undefined
-          ? new HttpResponse(null, { status, headers: reply.headers })
-          : HttpResponse.json(reply.body, { status, headers: reply.headers });
+          ? new HttpResponse(null, { status, headers })
+          : HttpResponse.json(reply.body, { status, headers });
       }),
+    );
+  }
+
+  private rateLimitHeaders(): Record<string, string> {
+    if (!this.rateLimit) return {};
+    const prefix = this.forge === 'github' ? 'x-ratelimit' : 'ratelimit';
+    return Object.fromEntries(
+      Object.entries(this.rateLimit).map(([k, v]) => [
+        `${prefix}-${k}`,
+        String(v),
+      ]),
     );
   }
 

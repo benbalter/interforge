@@ -4,8 +4,10 @@
   "apiVersion": "2026-03-10",
   "operations": [
     "GET /user",
+    "GET /rate_limit",
     "GET /repos/{owner}/{repo}",
     "GET /repos/{owner}/{repo}/contents/{path}",
+    "GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
     "GET /repos/{owner}/{repo}/issues",
     "POST /repos/{owner}/{repo}/issues",
     "GET /repos/{owner}/{repo}/issues/{issue_number}",

@@ -25,6 +25,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rate_limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get rate limit status for the authenticated user
+         * @description > [!NOTE]
+         *     > Accessing this endpoint does not count against your REST API rate limit.
+         *
+         *     Some categories of endpoints have custom rate limits that are separate from the rate limit governing the other REST API endpoints. For this reason, the API response categorizes your rate limit. Under `resources`, you'll see objects relating to different categories:
+         *     * The `core` object provides your rate limit status for all non-search-related resources in the REST API.
+         *     * The `search` object provides your rate limit status for the REST API for searching (excluding code searches). For more information, see "[Search](https://docs.github.com/rest/search/search)."
+         *     * The `code_search` object provides your rate limit status for the REST API for searching code. For more information, see "[Search code](https://docs.github.com/rest/search/search#search-code)."
+         *     * The `graphql` object provides your rate limit status for the GraphQL API. For more information, see "[Resource limitations](https://docs.github.com/graphql/overview/resource-limitations#rate-limit)."
+         *     * The `integration_manifest` object provides your rate limit status for the `POST /app-manifests/{code}/conversions` operation. For more information, see "[Creating a GitHub App from a manifest](https://docs.github.com/apps/creating-github-apps/setting-up-a-github-app/creating-a-github-app-from-a-manifest#3-you-exchange-the-temporary-code-to-retrieve-the-app-configuration)."
+         *     * The `dependency_snapshots` object provides your rate limit status for submitting snapshots to the dependency graph. For more information, see "[Dependency graph](https://docs.github.com/rest/dependency-graph)."
+         *     * The `dependency_sbom` object provides your rate limit status for requesting SBOMs from the dependency graph. For more information, see "[Dependency graph](https://docs.github.com/rest/dependency-graph)."
+         *     * The `actions_runner_registration` object provides your rate limit status for registering self-hosted runners in GitHub Actions. For more information, see "[Self-hosted runners](https://docs.github.com/rest/actions/self-hosted-runners)."
+         *     * The `source_import` object is no longer in use for any API endpoints, and it will be removed in the next API version. For more information about API versions, see "[API Versions](https://docs.github.com/rest/about-the-rest-api/api-versions)."
+         *
+         *     > [!NOTE]
+         *     > The `rate` object is closing down. If you're writing new API client code or updating existing code, you should use the `core` object instead of the `rate` object. The `core` object contains the same information that is present in the `rate` object.
+         */
+        get: operations["rate-limit/get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{repo}": {
         parameters: {
             query?: never;
@@ -85,6 +120,31 @@ export interface paths {
          *       - Greater than 100 MB: This endpoint is not supported.
          */
         get: operations["repos/get-content"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{repo}/git/trees/{tree_sha}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a tree
+         * @description Returns a single tree using the SHA1 value or ref name for that tree.
+         *
+         *     If `truncated` is `true` in the response then the number of items in the `tree` array exceeded our maximum limit. If you need to fetch more items, use the non-recursive method of fetching trees, and fetch one sub-tree at a time.
+         *
+         *     > [!NOTE]
+         *     > The limit for the `tree` array is 100,000 entries with a maximum size of 7 MB when using the `recursive` parameter.
+         */
+        get: operations["git/get-tree"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2808,6 +2868,33 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** Rate Limit */
+        "rate-limit": {
+            limit: number;
+            remaining: number;
+            reset: number;
+            used: number;
+        };
+        /**
+         * Rate Limit Overview
+         * @description Rate Limit Overview
+         */
+        "rate-limit-overview": {
+            resources: {
+                core: components["schemas"]["rate-limit"];
+                graphql?: components["schemas"]["rate-limit"];
+                search: components["schemas"]["rate-limit"];
+                code_search?: components["schemas"]["rate-limit"];
+                source_import?: components["schemas"]["rate-limit"];
+                integration_manifest?: components["schemas"]["rate-limit"];
+                actions_runner_registration?: components["schemas"]["rate-limit"];
+                scim?: components["schemas"]["rate-limit"];
+                dependency_snapshots?: components["schemas"]["rate-limit"];
+                dependency_sbom?: components["schemas"]["rate-limit"];
+                code_scanning_autofix?: components["schemas"]["rate-limit"];
+                copilot_usage_records?: components["schemas"]["rate-limit"];
+            };
+        };
         /**
          * Status
          * @description The status of a commit.
@@ -3007,6 +3094,43 @@ export interface components {
                 /** Format: uri */
                 self: string;
             };
+        };
+        /**
+         * Git Tree
+         * @description The hierarchy between files in a Git repository.
+         */
+        "git-tree": {
+            sha: string;
+            /** Format: uri */
+            url?: string;
+            truncated: boolean;
+            /**
+             * @description Objects specifying a tree structure
+             * @example [
+             *       {
+             *         "path": "file.rb",
+             *         "mode": "100644",
+             *         "type": "blob",
+             *         "size": 30,
+             *         "sha": "44b4fc6d56897b048c772eb4087f854f46256132",
+             *         "url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/44b4fc6d56897b048c772eb4087f854f46256132"
+             *       }
+             *     ]
+             */
+            tree: {
+                /** @example test/file.rb */
+                path: string;
+                /** @example 040000 */
+                mode: string;
+                /** @example tree */
+                type: string;
+                /** @example 23f6827669e43831def8a7ad935069c8bd418261 */
+                sha: string;
+                /** @example 12 */
+                size?: number;
+                /** @example https://api.github.com/repos/owner-482f3203ecf01f67e9deb18e/BBB_Private_Repo/git/blobs/23f6827669e43831def8a7ad935069c8bd418261 */
+                url?: string;
+            }[];
         };
         /**
          * Pull Request
@@ -3473,6 +3597,15 @@ export interface components {
                 "application/json": components["schemas"]["basic-error"];
             };
         };
+        /** @description Conflict */
+        conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["basic-error"];
+            };
+        };
         /** @description Service unavailable */
         service_unavailable: {
             headers: {
@@ -3540,6 +3673,12 @@ export interface components {
     headers: {
         /** @example <https://api.github.com/resource?page=2>; rel="next", <https://api.github.com/resource?page=5>; rel="last" */
         link: string;
+        /** @example 5000 */
+        "x-rate-limit-limit": number;
+        /** @example 4999 */
+        "x-rate-limit-remaining": number;
+        /** @example 1590701888 */
+        "x-rate-limit-reset": number;
     };
     pathItems: never;
 }
@@ -3566,6 +3705,31 @@ export interface operations {
             304: components["responses"]["not_modified"];
             401: components["responses"]["requires_authentication"];
             403: components["responses"]["forbidden"];
+        };
+    };
+    "rate-limit/get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Response */
+            200: {
+                headers: {
+                    "X-RateLimit-Limit": components["headers"]["x-rate-limit-limit"];
+                    "X-RateLimit-Remaining": components["headers"]["x-rate-limit-remaining"];
+                    "X-RateLimit-Reset": components["headers"]["x-rate-limit-reset"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["rate-limit-overview"];
+                };
+            };
+            304: components["responses"]["not_modified"];
+            404: components["responses"]["not_found"];
         };
     };
     "repos/get": {
@@ -3633,6 +3797,39 @@ export interface operations {
             304: components["responses"]["not_modified"];
             403: components["responses"]["forbidden"];
             404: components["responses"]["not_found"];
+        };
+    };
+    "git/get-tree": {
+        parameters: {
+            query?: {
+                /** @description Setting this parameter to any value returns the objects or subtrees referenced by the tree specified in `:tree_sha`. For example, setting `recursive` to any of the following will enable returning objects or subtrees: `0`, `1`, `"true"`, and `"false"`. Omit this parameter to prevent recursively returning objects or subtrees. */
+                recursive?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The account owner of the repository. The name is not case sensitive. */
+                owner: components["parameters"]["owner"];
+                /** @description The name of the repository without the `.git` extension. The name is not case sensitive. */
+                repo: components["parameters"]["repo"];
+                /** @description The SHA1 value or ref (branch or tag) name of the tree. */
+                tree_sha: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["git-tree"];
+                };
+            };
+            404: components["responses"]["not_found"];
+            409: components["responses"]["conflict"];
+            422: components["responses"]["validation_failed"];
         };
     };
     "issues/list-for-repo": {

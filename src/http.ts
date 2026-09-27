@@ -2,8 +2,11 @@ import {
   APIError,
   NetworkError,
   NotFoundError,
+  RateLimitError,
   type Forge,
 } from './abstract/errors.js';
+import LinkHeader from 'http-link-header';
+import { isRateLimited, rateLimitResetAt } from './retry.js';
 
 interface FetchResult {
   data?: unknown;
@@ -34,8 +37,18 @@ export async function unwrap<R extends FetchResult>(
     // GitLab's messages already start with the status ("404 Not Found").
     const detail = errorMessage(error) ?? response.statusText;
     const message = `${detail.startsWith(String(response.status)) ? '' : `${response.status} `}${detail} (${response.url})`;
-    const ErrorClass = response.status === 404 ? NotFoundError : APIError;
-    throw new ErrorClass(message, forge, response.status, error);
+    const { status, headers } = response;
+    if (isRateLimited(status, headers, errorMessage(error) ?? '')) {
+      throw new RateLimitError(
+        message,
+        forge,
+        status,
+        error,
+        rateLimitResetAt(headers),
+      );
+    }
+    const ErrorClass = status === 404 ? NotFoundError : APIError;
+    throw new ErrorClass(message, forge, status, error);
   }
   return { data: data as NonNullable<R['data']>, response };
 }
@@ -53,8 +66,15 @@ function errorMessage(error: unknown): string | undefined {
   return undefined;
 }
 
+/** The URL of the `Link: rel="next"` page, if there is one. */
+export function nextPageUrl(response: Response): URL | undefined {
+  const link = response.headers.get('link');
+  const [next] = link ? LinkHeader.parse(link).rel('next') : [];
+  return next ? new URL(next.uri) : undefined;
+}
+
 export function hasNextPage(response: Response): boolean {
-  return /rel="next"/.test(response.headers.get('link') ?? '');
+  return nextPageUrl(response) !== undefined;
 }
 
 /**
@@ -63,15 +83,13 @@ export function hasNextPage(response: Response): boolean {
  */
 export async function collectPages<T>(
   fetchPage: (page: number) => Promise<{ data: T[]; response: Response }>,
-  maxPages = 100,
 ): Promise<T[]> {
   const items: T[] = [];
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; ; page++) {
     const { data, response } = await fetchPage(page);
     items.push(...data);
-    if (!hasNextPage(response)) break;
+    if (!hasNextPage(response)) return items;
   }
-  return items;
 }
 
 /** Decodes a base64 file body (GitHub wraps it in newlines) as UTF-8. */

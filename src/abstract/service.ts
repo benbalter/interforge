@@ -1,6 +1,7 @@
 import { parseGitUrl } from '../parsing.js';
 import { NotFoundError, OperationNotSupported, type Forge } from './errors.js';
 import type { GitProject } from './project.js';
+import type { RateLimit } from '../retry.js';
 import type { GitUser } from './user.js';
 
 export interface ProjectRef {
@@ -13,6 +14,16 @@ export abstract class GitService {
   abstract readonly forge: Forge;
   /** Web URL of the instance, e.g. `https://gitlab.com`. */
   abstract readonly instanceUrl: string;
+
+  /** The rate limit from the most recent response that reported one. */
+  rateLimit?: RateLimit;
+
+  protected observeRateLimit = (limit: RateLimit) => {
+    this.rateLimit = limit;
+  };
+
+  /** Requests left before the rate limit, or null if the forge hasn't said. */
+  abstract getRateLimitRemaining(): Promise<number | null>;
 
   get hostname() {
     return new URL(this.instanceUrl).hostname;

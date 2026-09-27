@@ -27,17 +27,43 @@ for (const comment of await issue.getComments()) {
 
 ## What's supported
 
-|                                                                                | GitHub                    | GitLab            |
-| ------------------------------------------------------------------------------ | ------------------------- | ----------------- |
-| Projects: get, from URL, exists                                                | ✓                         | ✓ (nested groups) |
-| Issues: list/filter, get, create, close, title/description, labels, assignees  | ✓                         | ✓                 |
-| Comments on issues and PRs/MRs: list/filter, get, create, edit                 | ✓                         | ✓                 |
-| Pull/merge requests: list by status, get, create, update, close, merge, labels | ✓                         | ✓                 |
-| Commit statuses: set, list, PR head statuses                                   | ✓                         | ✓                 |
-| File contents at a branch, tag or commit                                       | ✓ (incl. files over 1 MB) | ✓                 |
-| Current user                                                                   | ✓                         | ✓                 |
+|                                                                                | GitHub                           | GitLab                |
+| ------------------------------------------------------------------------------ | -------------------------------- | --------------------- |
+| Projects: get, from URL, exists                                                | ✓                                | ✓ (nested groups)     |
+| Issues: list/filter, get, create, close, title/description, labels, assignees  | ✓                                | ✓                     |
+| Comments on issues and PRs/MRs: list/filter, get, create, edit                 | ✓                                | ✓                     |
+| Pull/merge requests: list by status, get, create, update, close, merge, labels | ✓                                | ✓                     |
+| Commit statuses: set, list, PR head statuses                                   | ✓                                | ✓                     |
+| File contents at a branch, tag or commit                                       | ✓ (incl. files over 1 MB)        | ✓                     |
+| List files: top level or recursive, regex filter, at a ref                     | ✓ (walks trees GitHub truncates) | ✓ (keyset pagination) |
+| Retries, timeouts, rate limits, remaining quota                                | ✓                                | ✓                     |
+| Current user                                                                   | ✓                                | ✓                     |
 
 Differences are explicit: something one forge can't do throws `OperationNotSupported` instead of silently doing less. For example, GitHub has no private issues, and GitLab Free drops extra assignees without reporting an error.
+
+## Rate limits and retries
+
+Both clients retry and time out by default:
+
+- **Rate limits** are retried for any method, because a rate-limited request wasn't carried out. That includes GitHub's 403-style limits and secondary limits, not just 429. forgewright waits for `Retry-After` or the reset time.
+- **Long limits:** if a limit won't clear within `maxWait`, the call throws `RateLimitError` with `resetAt` instead of sleeping.
+- **Server errors and network failures** (500/502/503/504) are retried with backoff and jitter, for reads only. A failed write may still have taken effect.
+- **Rate-limit quota:** `service.rateLimit` holds the latest rate-limit headers, and `getRateLimitRemaining()` reports the remaining quota. GitHub checks this without spending quota; GitLab uses the last response's headers.
+
+```ts
+new GitlabService({
+  token,
+  retry: {
+    retries: 3, // after the first attempt
+    maxWait: 60_000, // ms; longer limits throw RateLimitError
+    baseDelay: 1000, // first backoff; doubles each retry
+    timeout: 30_000, // per attempt; false for none
+    onRetry: ({ reason, wait, url }) =>
+      console.warn(`retrying ${url}: ${reason}`),
+  },
+});
+new GithubService({ token, retry: false }); // no retries
+```
 
 ## Design
 
@@ -76,6 +102,22 @@ The upstream problems found so far, each fixed by an overlay in `spec/<forge>/ov
 - **GitHub**'s bundled examples lag its schemas. For example, `full-repository` lacks `language`, and labels lack `archived_at`. These examples are only used in tests, which patch them.
 
 About 60 more nullability gaps show up in real traffic, almost all in fields forgewright doesn't read (milestones, time stats, `auto_merge`, …). These are left alone until something depends on them.
+
+### Libraries over custom code
+
+Runtime dependencies:
+
+- [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) for the typed HTTP client.
+- [ky](https://github.com/sindresorhus/ky) for retries, backoff, jitter and timeouts.
+- [http-link-header](https://github.com/jhermsmeier/node-http-link-header) for pagination links.
+
+Build and test tooling: openapi-format (overlays and filtering), openapi-typescript, msw, Ajv.
+
+Custom code is kept where no suitable library fits:
+
+- The forge-specific rate-limit rules, which ky can't express: GitHub's 403 limits, and failing fast instead of capping the wait.
+- The rate-limit header parser. The only one on npm, `ratelimit-header-parser`, is a 2023 0.1.0 release.
+- The mappers between each forge's shapes and the model.
 
 ### Tests run against spec-validated fakes
 

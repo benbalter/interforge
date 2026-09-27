@@ -22,6 +22,23 @@ export interface IssueListOptions {
   labels?: string[];
 }
 
+export interface GetFilesOptions {
+  /** Branch, tag or commit. Defaults to the default branch. */
+  ref?: string;
+  /** Only paths matching this. A string is used as a regular expression. */
+  filterRegex?: string | RegExp;
+  /** Include files in subdirectories. Default false: top level only. */
+  recursive?: boolean;
+}
+
+/** Applies getFiles()' filterRegex, the same way on every forge. */
+export function filterPaths(paths: string[], filterRegex?: string | RegExp) {
+  if (!filterRegex) return paths;
+  const pattern =
+    typeof filterRegex === 'string' ? new RegExp(filterRegex) : filterRegex;
+  return paths.filter((path) => pattern.test(path));
+}
+
 export interface CreateIssueOptions {
   labels?: string[];
   assignees?: string[];
@@ -84,6 +101,9 @@ export abstract class GitProject {
    * for paths that aren't files.
    */
   abstract getFileContent(path: string, ref?: string): Promise<string>;
+
+  /** Paths of the files (not directories) in the repository. Mirrors ogr's get_files(). */
+  abstract getFiles(options?: GetFilesOptions): Promise<string[]>;
 
   abstract setCommitStatus(
     sha: string,

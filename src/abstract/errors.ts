@@ -23,6 +23,20 @@ export class APIError extends ForgeError {
 
 export class NotFoundError extends APIError {}
 
+/** The forge's rate limit was hit, and clearing it would take too long to wait. */
+export class RateLimitError extends APIError {
+  constructor(
+    message: string,
+    forge: Forge,
+    status: number,
+    response: unknown,
+    /** When the forge says requests will be accepted again, if it says. */
+    readonly resetAt?: Date,
+  ) {
+    super(message, forge, status, response);
+  }
+}
+
 /** The forge (or this instance of it) can't do what was asked. */
 export class OperationNotSupported extends ForgeError {}
 

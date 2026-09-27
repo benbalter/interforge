@@ -5,8 +5,10 @@ import {
   OperationNotSupported,
 } from '../../abstract/errors.js';
 import {
+  filterPaths,
   GitProject,
   type CreateIssueOptions,
+  type GetFilesOptions,
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
@@ -167,6 +169,47 @@ export class GithubProject extends GitProject {
       }),
     );
     return raw;
+  }
+
+  async getFiles({
+    ref,
+    filterRegex,
+    recursive = false,
+  }: GetFilesOptions = {}) {
+    const getTree = async (sha: string, recursive: boolean) =>
+      (
+        await unwrap(
+          'github',
+          this.client.GET('/repos/{owner}/{repo}/git/trees/{tree_sha}', {
+            params: {
+              path: { ...this.path, tree_sha: sha },
+              query: recursive ? { recursive: '1' } : {},
+            },
+          }),
+        )
+      ).data;
+
+    const root = ref ?? this.defaultBranch ?? 'HEAD';
+    const tree = await getTree(root, recursive);
+    let paths: string[] = [];
+
+    if (!recursive || !tree.truncated) {
+      paths = tree.tree.filter((e) => e.type === 'blob').map((e) => e.path);
+    } else {
+      // Recursive trees stop at 100,000 entries or 7 MB. GitHub's advice is
+      // to walk the tree one level at a time instead.
+      const queue = [{ sha: root, prefix: '' }];
+      while (queue.length) {
+        const { sha, prefix } = queue.shift()!;
+        for (const entry of (await getTree(sha, false)).tree) {
+          const path = prefix + entry.path;
+          if (entry.type === 'blob') paths.push(path);
+          if (entry.type === 'tree')
+            queue.push({ sha: entry.sha, prefix: `${path}/` });
+        }
+      }
+    }
+    return filterPaths(paths, filterRegex);
   }
 
   async setCommitStatus(

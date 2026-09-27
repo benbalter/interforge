@@ -101,3 +101,6 @@ actions:
   - target: $.components.schemas.APIEntitiesMergeRequestBasic.properties.source_project_id
     update:
       nullable: true
+  - target: $.components.schemas.APIEntitiesTreeObject
+    update:
+      required: [id, name, type, path, mode]

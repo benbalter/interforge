@@ -54,3 +54,21 @@ describe('GitHub file contents', () => {
     expect(await project.getFileContent('big.txt')).toBe('more than ten bytes');
   });
 });
+
+describe('GitHub list files', () => {
+  test('a truncated recursive tree is walked one level at a time', async () => {
+    const { service, ref, setFile, fake } = github({ treeLimit: 2 });
+    setFile('a.txt', '');
+    setFile('dir/b.txt', '');
+    setFile('dir/sub/c.txt', '');
+    const project = await service.getProject(ref);
+    fake.requests = 0;
+
+    expect((await project.getFiles({ recursive: true })).sort()).toEqual([
+      'a.txt',
+      'dir/b.txt',
+      'dir/sub/c.txt',
+    ]);
+    expect(fake.requests).toBe(4); // truncated recursive tree, then root, dir, dir/sub
+  });
+});

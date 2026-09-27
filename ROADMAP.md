@@ -24,7 +24,8 @@ Goal: cover everything in [packit/ogr](https://github.com/packit/ogr)'s abstract
 | Pull requests   | `get_pr_list`, `get_pr`, `create_pr`, `update_info`, `close`, `merge`, `add_label`, `get_comments`, `comment`, `get_statuses` | ✓      |
 | Comments        | `body` (read and edit), `author`, `created`, `edited`                                                                         | ✓      |
 | Commit statuses | `set_commit_status`, `get_commit_statuses`                                                                                    | ✓      |
-| Files           | `get_file_content`                                                                                                            | ✓      |
+| Files           | `get_file_content`, `get_files`                                                                                               | ✓      |
+| Service         | `get_rate_limit_remaining`, plus retries, timeouts and rate-limit waits                                                       | ✓      |
 
 ## Phase 1: Harden what exists
 
@@ -35,7 +36,6 @@ Earn trust in the foundation before widening it.
 | Record live fixtures with tokens              | M    | Use a scratch GitHub repo and gitlab.com project. Cover writes, GitLab notes and statuses (they return 401 anonymously), and GitHub files over 1 MB.                  |
 | Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                                  |
 | Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                                     |
-| Rate limits and retries                       | M    | GitHub: `Retry-After`, secondary limits, `/rate_limit` (ogr's `get_rate_limit_remaining`). GitLab: `RateLimit-*` headers. Add openapi-fetch middleware and back off.  |
 | Lazy iteration                                | S    | `iterateIssues()` and friends as async generators, plus a `limit`. One live list fetched 2,179 MRs just to filter them.                                               |
 | Version skew policy                           | S    | The specs track the latest release, but self-managed GitLab and GHES lag behind. Document the oldest supported versions, and treat new fields as optional in mappers. |
 | Runtime portability                           | S    | Replace `Buffer` with `atob`/`TextDecoder` so browsers and Workers work.                                                                                              |
@@ -47,13 +47,12 @@ Ordered by how useful each area is to automation tools.
 
 ### 2a. Repository contents and history
 
-| ogr                                       | GitHub                             | GitLab                                            | Size | Notes                                                                                    |
-| ----------------------------------------- | ---------------------------------- | ------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------- |
-| `get_files(ref, filter_regex, recursive)` | `GET /git/trees/{sha}?recursive=1` | `GET /repository/tree?recursive=true` (paginated) | M    | GitHub truncates very large trees; detect `truncated` and fall back to walking the tree. |
-| `get_branches`, `get_sha_from_branch`     | `/branches`                        | `/repository/branches`                            | S    |                                                                                          |
-| `get_commits(ref)`                        | `/commits?sha=`                    | `/repository/commits?ref_name=`                   | S    |                                                                                          |
-| `get_tags`, `get_sha_from_tag` → `GitTag` | `/tags`                            | `/repository/tags`                                | S    |                                                                                          |
-| `get_git_urls`                            | `clone_url`/`ssh_url`              | `http_url_to_repo`/`ssh_url_to_repo`              | S    | Comes from the project data already fetched.                                             |
+| ogr                                       | GitHub                | GitLab                               | Size | Notes                                        |
+| ----------------------------------------- | --------------------- | ------------------------------------ | ---- | -------------------------------------------- |
+| `get_branches`, `get_sha_from_branch`     | `/branches`           | `/repository/branches`               | S    |                                              |
+| `get_commits(ref)`                        | `/commits?sha=`       | `/repository/commits?ref_name=`      | S    |                                              |
+| `get_tags`, `get_sha_from_tag` → `GitTag` | `/tags`               | `/repository/tags`                   | S    |                                              |
+| `get_git_urls`                            | `clone_url`/`ssh_url` | `http_url_to_repo`/`ssh_url_to_repo` | S    | Comes from the project data already fetched. |
 
 ### 2b. Releases
 

@@ -191,6 +191,51 @@ export function fakeGitlab({
     };
   });
 
+  fake.route(`GET ${P}/repository/tree`, ({ query }) => {
+    const ref =
+      !query.get('ref') || query.get('ref') === 'HEAD'
+        ? 'main'
+        : query.get('ref')!;
+    const recursive = query.get('recursive') === 'true';
+    const entries = new Map<string, Json>();
+    for (const key of files.keys()) {
+      if (!key.startsWith(`${ref}:`)) continue;
+      const parts = key.slice(ref.length + 1).split('/');
+      for (let i = 1; i <= (recursive ? parts.length : 1); i++) {
+        const path = parts.slice(0, i).join('/');
+        const isFile = i === parts.length;
+        entries.set(path, {
+          id: 'f'.repeat(40),
+          name: parts[i - 1],
+          type: isFile ? 'blob' : 'tree',
+          path,
+          mode: isFile ? '100644' : '040000',
+        });
+      }
+    }
+    if (!entries.size)
+      return { status: 404, body: { message: '404 Tree Not Found' } };
+
+    // Keyset pagination: page_token is where the next page starts.
+    const all = [...entries.values()];
+    const start = Number(query.get('page_token') ?? 0);
+    const perPage = Math.min(
+      Number(query.get('per_page') ?? 20),
+      fake.pageSize,
+    );
+    const next = start + perPage;
+    const link = new URL(`${instanceUrl}/api/v4/projects/1/repository/tree`);
+    link.search = new URLSearchParams({
+      ...Object.fromEntries(query),
+      page_token: String(next),
+    }).toString();
+    return {
+      body: all.slice(start, next),
+      headers:
+        next < all.length ? { Link: `<${link}>; rel="next"` } : undefined,
+    };
+  });
+
   fake.route(`GET ${P}/issues`, ({ params, query }) => {
     if (!isProject(params)) return fake.notFound();
     const state = query.get('state') ?? 'all';

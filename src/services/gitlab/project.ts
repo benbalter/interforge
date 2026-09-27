@@ -1,12 +1,14 @@
 import type { CommitFlagOptions } from '../../abstract/commit-flag.js';
 import { IssueTrackerDisabled } from '../../abstract/errors.js';
 import {
+  filterPaths,
   GitProject,
   type CreateIssueOptions,
+  type GetFilesOptions,
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
-import { collectPages, decodeBase64, unwrap } from '../../http.js';
+import { collectPages, decodeBase64, nextPageUrl, unwrap } from '../../http.js';
 import { assertAssigned, GitlabIssue } from './issue.js';
 import {
   toCommitFlag,
@@ -173,6 +175,37 @@ export class GitlabProject extends GitProject {
     return data.encoding === 'base64'
       ? decodeBase64(data.content)
       : data.content;
+  }
+
+  async getFiles({
+    ref,
+    filterRegex,
+    recursive = false,
+  }: GetFilesOptions = {}) {
+    const paths: string[] = [];
+    let pageToken: string | undefined;
+    // Keyset pagination, which GitLab recommends for large trees.
+    do {
+      const { data, response } = await unwrap(
+        'gitlab',
+        this.client.GET('/api/v4/projects/{id}/repository/tree', {
+          params: {
+            path: { id: this.id },
+            query: {
+              ref,
+              recursive,
+              pagination: 'keyset',
+              page_token: pageToken,
+              per_page: 100,
+            },
+          },
+        }),
+      );
+      paths.push(...data.filter((e) => e.type === 'blob').map((e) => e.path));
+      pageToken =
+        nextPageUrl(response)?.searchParams.get('page_token') ?? undefined;
+    } while (pageToken);
+    return filterPaths(paths, filterRegex);
   }
 
   async setCommitStatus(

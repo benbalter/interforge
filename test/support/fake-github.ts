@@ -11,6 +11,8 @@ interface Options {
   viewer?: string;
   /** GitHub leaves `content` empty for files over 1 MB. */
   largeFileBytes?: number;
+  /** Recursive trees with more entries than this come back truncated. */
+  treeLimit?: number;
 }
 
 /**
@@ -24,6 +26,7 @@ export function fakeGithub({
   hasIssues = true,
   viewer = 'alice',
   largeFileBytes = 1024 * 1024,
+  treeLimit = 100_000,
 }: Options = {}) {
   const fake = new FakeForge('github', API);
   const issues = new Map<number, Json>(); // includes PRs, as GitHub does
@@ -144,6 +147,15 @@ export function fakeGithub({
   const isRepo = (p: Record<string, string>) =>
     p.owner === owner && p.repo === repo;
 
+  fake.route('GET /rate_limit', () => {
+    const body = example<Json>('github', 'rate-limit-overview');
+    (body.resources as Json).core = {
+      ...((body.resources as Json).core as Json),
+      remaining: fake.rateLimit?.remaining ?? 4999,
+    };
+    return { body };
+  });
+
   fake.route('GET /user', () => ({
     body: {
       ...example<Json>(
@@ -200,6 +212,59 @@ export function fakeGithub({
             : Buffer.from(content)
                 .toString('base64')
                 .replace(/(.{60})/g, '$1\n'),
+        },
+      };
+    },
+  );
+
+  // Tree SHAs handed out for subdirectories, so they can be fetched by SHA.
+  const trees = new Map<string, { ref: string; dir: string }>();
+  const treeSha = (ref: string, dir: string) => {
+    const sha = Buffer.from(`${ref}:${dir}`)
+      .toString('hex')
+      .padEnd(40, '0')
+      .slice(0, 40);
+    trees.set(sha, { ref, dir });
+    return sha;
+  };
+
+  fake.route(
+    'GET /repos/{owner}/{repo}/git/trees/{tree_sha}',
+    ({ params, query }) => {
+      const { ref, dir } = trees.get(params.tree_sha) ?? {
+        ref: params.tree_sha === 'HEAD' ? 'main' : params.tree_sha,
+        dir: '',
+      };
+      const prefix = dir ? `${dir}/` : '';
+      const paths = [...files.keys()]
+        .filter((key) => key.startsWith(`${ref}:${prefix}`))
+        .map((key) => key.slice(ref.length + 1 + prefix.length));
+      if (!paths.length) return fake.notFound();
+
+      const recursive = query.has('recursive');
+      const entries = new Map<string, Json>();
+      for (const path of paths) {
+        const parts = path.split('/');
+        const depth = recursive ? parts.length : 1;
+        for (let i = 1; i <= depth; i++) {
+          const sub = parts.slice(0, i).join('/');
+          const isFile = i === parts.length;
+          entries.set(sub, {
+            path: sub,
+            mode: isFile ? '100644' : '040000',
+            type: isFile ? 'blob' : 'tree',
+            sha: isFile ? '0'.repeat(40) : treeSha(ref, prefix + sub),
+            url: `${API}/repos/${owner}/${repo}/git/x`,
+          });
+        }
+      }
+      const tree = [...entries.values()];
+      return {
+        body: {
+          sha: treeSha(ref, dir),
+          url: `${API}/repos/${owner}/${repo}/git/trees/${params.tree_sha}`,
+          tree: tree.slice(0, treeLimit),
+          truncated: recursive && tree.length > treeLimit,
         },
       };
     },

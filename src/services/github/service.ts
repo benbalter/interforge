@@ -1,5 +1,6 @@
 import { GitService, type ProjectRef } from '../../abstract/service.js';
 import { unwrap } from '../../http.js';
+import type { RetryOptions } from '../../retry.js';
 import { createGithubClient, type GithubClient } from './client.js';
 import { toProjectData } from './mappers.js';
 import { GithubProject } from './project.js';
@@ -11,6 +12,8 @@ export interface GithubServiceOptions {
   /** Override the API URL (defaults to api.github.com, or <instance>/api/v3 for GHES). */
   apiUrl?: string;
   fetch?: typeof globalThis.fetch;
+  /** Retry and rate-limit behavior. `false` turns retries off. */
+  retry?: RetryOptions | false;
 }
 
 export class GithubService extends GitService {
@@ -23,6 +26,7 @@ export class GithubService extends GitService {
     instanceUrl = 'https://github.com',
     apiUrl,
     fetch,
+    retry,
   }: GithubServiceOptions = {}) {
     super();
     this.instanceUrl = instanceUrl.replace(/\/$/, '');
@@ -34,6 +38,8 @@ export class GithubService extends GitService {
       apiUrl: apiUrl ?? defaultApiUrl,
       token,
       fetch,
+      retry,
+      onRateLimit: this.observeRateLimit,
     });
   }
 
@@ -45,6 +51,12 @@ export class GithubService extends GitService {
       }),
     );
     return new GithubProject(toProjectData(data), this);
+  }
+
+  /** Asks GitHub; checking the rate limit doesn't count against it. */
+  async getRateLimitRemaining() {
+    const { data } = await unwrap('github', this.client.GET('/rate_limit'));
+    return data.resources.core.remaining;
   }
 
   async getCurrentUser() {

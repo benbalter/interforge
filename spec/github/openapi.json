@@ -275,6 +275,61 @@
         }
       }
     },
+    "/rate_limit": {
+      "get": {
+        "summary": "Get rate limit status for the authenticated user",
+        "description": "> [!NOTE]\n> Accessing this endpoint does not count against your REST API rate limit.\n\nSome categories of endpoints have custom rate limits that are separate from the rate limit governing the other REST API endpoints. For this reason, the API response categorizes your rate limit. Under `resources`, you'll see objects relating to different categories:\n* The `core` object provides your rate limit status for all non-search-related resources in the REST API.\n* The `search` object provides your rate limit status for the REST API for searching (excluding code searches). For more information, see \"[Search](https://docs.github.com/rest/search/search).\"\n* The `code_search` object provides your rate limit status for the REST API for searching code. For more information, see \"[Search code](https://docs.github.com/rest/search/search#search-code).\"\n* The `graphql` object provides your rate limit status for the GraphQL API. For more information, see \"[Resource limitations](https://docs.github.com/graphql/overview/resource-limitations#rate-limit).\"\n* The `integration_manifest` object provides your rate limit status for the `POST /app-manifests/{code}/conversions` operation. For more information, see \"[Creating a GitHub App from a manifest](https://docs.github.com/apps/creating-github-apps/setting-up-a-github-app/creating-a-github-app-from-a-manifest#3-you-exchange-the-temporary-code-to-retrieve-the-app-configuration).\"\n* The `dependency_snapshots` object provides your rate limit status for submitting snapshots to the dependency graph. For more information, see \"[Dependency graph](https://docs.github.com/rest/dependency-graph).\"\n* The `dependency_sbom` object provides your rate limit status for requesting SBOMs from the dependency graph. For more information, see \"[Dependency graph](https://docs.github.com/rest/dependency-graph).\"\n* The `actions_runner_registration` object provides your rate limit status for registering self-hosted runners in GitHub Actions. For more information, see \"[Self-hosted runners](https://docs.github.com/rest/actions/self-hosted-runners).\"\n* The `source_import` object is no longer in use for any API endpoints, and it will be removed in the next API version. For more information about API versions, see \"[API Versions](https://docs.github.com/rest/about-the-rest-api/api-versions).\"\n\n> [!NOTE]\n> The `rate` object is closing down. If you're writing new API client code or updating existing code, you should use the `core` object instead of the `rate` object. The `core` object contains the same information that is present in the `rate` object.",
+        "tags": [
+          "rate-limit"
+        ],
+        "operationId": "rate-limit/get",
+        "externalDocs": {
+          "description": "API method documentation",
+          "url": "https://docs.github.com/rest/rate-limit/rate-limit#get-rate-limit-status-for-the-authenticated-user"
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rate-limit-overview"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/rate-limit-overview"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/x-rate-limit-limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/x-rate-limit-remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/x-rate-limit-reset"
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/not_modified"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          }
+        },
+        "x-github": {
+          "githubCloudOnly": false,
+          "enabledForGitHubApps": true,
+          "category": "rate-limit",
+          "subcategory": "rate-limit"
+        }
+      }
+    },
     "/repos/{owner}/{repo}": {
       "get": {
         "summary": "Get a repository",
@@ -473,6 +528,82 @@
           "enabledForGitHubApps": true,
           "category": "repos",
           "subcategory": "contents"
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/git/trees/{tree_sha}": {
+      "get": {
+        "summary": "Get a tree",
+        "description": "Returns a single tree using the SHA1 value or ref name for that tree.\n\nIf `truncated` is `true` in the response then the number of items in the `tree` array exceeded our maximum limit. If you need to fetch more items, use the non-recursive method of fetching trees, and fetch one sub-tree at a time.\n\n> [!NOTE]\n> The limit for the `tree` array is 100,000 entries with a maximum size of 7 MB when using the `recursive` parameter.",
+        "tags": [
+          "git"
+        ],
+        "operationId": "git/get-tree",
+        "externalDocs": {
+          "description": "API method documentation",
+          "url": "https://docs.github.com/rest/git/trees#get-a-tree"
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/owner"
+          },
+          {
+            "$ref": "#/components/parameters/repo"
+          },
+          {
+            "name": "tree_sha",
+            "description": "The SHA1 value or ref (branch or tag) name of the tree.",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-multi-segment": true
+          },
+          {
+            "name": "recursive",
+            "description": "Setting this parameter to any value returns the objects or subtrees referenced by the tree specified in `:tree_sha`. For example, setting `recursive` to any of the following will enable returning objects or subtrees: `0`, `1`, `\"true\"`, and `\"false\"`. Omit this parameter to prevent recursively returning objects or subtrees.",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/git-tree"
+                },
+                "examples": {
+                  "default-response": {
+                    "$ref": "#/components/examples/git-tree-default-response"
+                  },
+                  "response-recursively-retrieving-a-tree": {
+                    "$ref": "#/components/examples/git-tree-response-recursively-retrieving-a-tree"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/validation_failed"
+          }
+        },
+        "x-github": {
+          "githubCloudOnly": false,
+          "enabledForGitHubApps": true,
+          "category": "git",
+          "subcategory": "trees"
         }
       }
     },
@@ -6909,6 +7040,85 @@
           "subscribers_count"
         ]
       },
+      "rate-limit": {
+        "title": "Rate Limit",
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "reset": {
+            "type": "integer"
+          },
+          "used": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit",
+          "remaining",
+          "reset",
+          "used"
+        ]
+      },
+      "rate-limit-overview": {
+        "title": "Rate Limit Overview",
+        "description": "Rate Limit Overview",
+        "type": "object",
+        "properties": {
+          "resources": {
+            "type": "object",
+            "properties": {
+              "core": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "graphql": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "search": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "code_search": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "source_import": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "integration_manifest": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "actions_runner_registration": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "scim": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "dependency_snapshots": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "dependency_sbom": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "code_scanning_autofix": {
+                "$ref": "#/components/schemas/rate-limit"
+              },
+              "copilot_usage_records": {
+                "$ref": "#/components/schemas/rate-limit"
+              }
+            },
+            "required": [
+              "core",
+              "search"
+            ]
+          }
+        },
+        "required": [
+          "resources"
+        ]
+      },
       "status": {
         "title": "Status",
         "description": "The status of a commit.",
@@ -7478,6 +7688,77 @@
           "type",
           "url",
           "submodule_git_url"
+        ]
+      },
+      "git-tree": {
+        "title": "Git Tree",
+        "description": "The hierarchy between files in a Git repository.",
+        "type": "object",
+        "properties": {
+          "sha": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "tree": {
+            "description": "Objects specifying a tree structure",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "mode",
+                "type",
+                "sha"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "example": "test/file.rb"
+                },
+                "mode": {
+                  "type": "string",
+                  "example": "040000"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "tree"
+                },
+                "sha": {
+                  "type": "string",
+                  "example": "23f6827669e43831def8a7ad935069c8bd418261"
+                },
+                "size": {
+                  "type": "integer",
+                  "example": 12
+                },
+                "url": {
+                  "type": "string",
+                  "example": "https://api.github.com/repos/owner-482f3203ecf01f67e9deb18e/BBB_Private_Repo/git/blobs/23f6827669e43831def8a7ad935069c8bd418261"
+                }
+              }
+            },
+            "example": [
+              {
+                "path": "file.rb",
+                "mode": "100644",
+                "type": "blob",
+                "size": 30,
+                "sha": "44b4fc6d56897b048c772eb4087f854f46256132",
+                "url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/44b4fc6d56897b048c772eb4087f854f46256132"
+              }
+            ]
+          }
+        },
+        "required": [
+          "sha",
+          "tree",
+          "truncated"
         ]
       },
       "pull-request": {
@@ -8360,6 +8641,72 @@
       }
     },
     "examples": {
+      "rate-limit-overview": {
+        "value": {
+          "resources": {
+            "core": {
+              "limit": 5000,
+              "used": 1,
+              "remaining": 4999,
+              "reset": 1691591363
+            },
+            "search": {
+              "limit": 30,
+              "used": 12,
+              "remaining": 18,
+              "reset": 1691591091
+            },
+            "graphql": {
+              "limit": 5000,
+              "used": 7,
+              "remaining": 4993,
+              "reset": 1691593228
+            },
+            "integration_manifest": {
+              "limit": 5000,
+              "used": 1,
+              "remaining": 4999,
+              "reset": 1691594631
+            },
+            "source_import": {
+              "limit": 100,
+              "used": 1,
+              "remaining": 99,
+              "reset": 1691591091
+            },
+            "actions_runner_registration": {
+              "limit": 10000,
+              "used": 0,
+              "remaining": 10000,
+              "reset": 1691594631
+            },
+            "scim": {
+              "limit": 15000,
+              "used": 0,
+              "remaining": 15000,
+              "reset": 1691594631
+            },
+            "dependency_snapshots": {
+              "limit": 100,
+              "used": 0,
+              "remaining": 100,
+              "reset": 1691591091
+            },
+            "code_search": {
+              "limit": 10,
+              "used": 0,
+              "remaining": 10,
+              "reset": 1691591091
+            },
+            "code_scanning_autofix": {
+              "limit": 10,
+              "used": 0,
+              "remaining": 10,
+              "reset": 1691591091
+            }
+          }
+        }
+      },
       "full-repository-default-response": {
         "summary": "Default response",
         "value": {
@@ -9597,6 +9944,57 @@
             "self": "https://api.github.com/repos/jquery/jquery/contents/test/qunit?ref=master",
             "html": "https://github.com/jquery/qunit/tree/6ca3721222109997540bd6d9ccd396902e0ad2f9"
           }
+        }
+      },
+      "git-tree-default-response": {
+        "summary": "Default response",
+        "value": {
+          "sha": "9fb037999f264ba9a7fc6274d15fa3ae2ab98312",
+          "url": "https://api.github.com/repos/octocat/Hello-World/trees/9fb037999f264ba9a7fc6274d15fa3ae2ab98312",
+          "tree": [
+            {
+              "path": "file.rb",
+              "mode": "100644",
+              "type": "blob",
+              "size": 30,
+              "sha": "44b4fc6d56897b048c772eb4087f854f46256132",
+              "url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/44b4fc6d56897b048c772eb4087f854f46256132"
+            },
+            {
+              "path": "subdir",
+              "mode": "040000",
+              "type": "tree",
+              "sha": "f484d249c660418515fb01c2b9662073663c242e",
+              "url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/f484d249c660418515fb01c2b9662073663c242e"
+            },
+            {
+              "path": "exec_file",
+              "mode": "100755",
+              "type": "blob",
+              "size": 75,
+              "sha": "45b983be36b73c0788dc9cbcb76cbb80fc7bb057",
+              "url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/45b983be36b73c0788dc9cbcb76cbb80fc7bb057"
+            }
+          ],
+          "truncated": false
+        }
+      },
+      "git-tree-response-recursively-retrieving-a-tree": {
+        "summary": "Response recursively retrieving a tree",
+        "value": {
+          "sha": "fc6274d15fa3ae2ab983129fb037999f264ba9a7",
+          "url": "https://api.github.com/repos/octocat/Hello-World/trees/fc6274d15fa3ae2ab983129fb037999f264ba9a7",
+          "tree": [
+            {
+              "path": "subdir/file.txt",
+              "mode": "100644",
+              "type": "blob",
+              "size": 132,
+              "sha": "7c258a9869f33c1e1e1f74fbb32f07c86cb5a75b",
+              "url": "https://api.github.com/repos/octocat/Hello-World/git/7c258a9869f33c1e1e1f74fbb32f07c86cb5a75b"
+            }
+          ],
+          "truncated": false
         }
       },
       "issue-items": {
@@ -11046,6 +11444,16 @@
           }
         }
       },
+      "conflict": {
+        "description": "Conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/basic-error"
+            }
+          }
+        }
+      },
       "service_unavailable": {
         "description": "Service unavailable",
         "content": {
@@ -11096,6 +11504,25 @@
         "example": "<https://api.github.com/resource?page=2>; rel=\"next\", <https://api.github.com/resource?page=5>; rel=\"last\"",
         "schema": {
           "type": "string"
+        }
+      },
+      "x-rate-limit-limit": {
+        "example": 5000,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "x-rate-limit-remaining": {
+        "example": 4999,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "x-rate-limit-reset": {
+        "example": 1590701888,
+        "schema": {
+          "type": "integer",
+          "format": "timestamp"
         }
       }
     }

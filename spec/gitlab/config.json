@@ -6,6 +6,7 @@
     "GET /api/v4/users",
     "GET /api/v4/projects/{id}",
     "GET /api/v4/projects/{id}/repository/files/{file_path}",
+    "GET /api/v4/projects/{id}/repository/tree",
     "GET /api/v4/projects/{id}/issues",
     "POST /api/v4/projects/{id}/issues",
     "GET /api/v4/projects/{id}/issues/{issue_iid}",
