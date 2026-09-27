@@ -13,7 +13,13 @@
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { openapiFilter, openapiOverlay, parseFile } from 'openapi-format';
+import ky from 'ky';
+import {
+  openapiFilter,
+  openapiOverlay,
+  parseFile,
+  parseString,
+} from 'openapi-format';
 import openapiTS, { astToString } from 'openapi-typescript';
 
 const FORGES = ['github', 'gitlab'];
@@ -25,6 +31,31 @@ type PathItem = Record<string, unknown>;
 interface Config {
   source: string;
   operations: string[];
+}
+
+/**
+ * Downloads and parses an upstream description. Uses ky rather than
+ * openapi-format's own fetching, so rate limits (gitlab.com answers CI
+ * runners with 429s) are retried after `Retry-After`.
+ */
+async function download(url: string): Promise<Doc> {
+  const text = await ky
+    .get(url, {
+      timeout: 120_000,
+      retry: {
+        limit: 5,
+        statusCodes: [429, 500, 502, 503, 504],
+        afterStatusCodes: [429, 503],
+        maxRetryAfter: 120_000,
+        jitter: true,
+      },
+    })
+    .text();
+  const doc = await parseString(text, {
+    format: url.endsWith('.json') ? 'json' : 'yaml',
+  });
+  if (doc instanceof Error) throw doc;
+  return doc;
 }
 
 async function applyOverlays(doc: Doc, dir: string): Promise<Doc> {
@@ -93,7 +124,7 @@ async function build(forge: string) {
     await readFile(join(specDir, 'config.json'), 'utf8'),
   ) as Config;
 
-  let doc = await parseFile(config.source);
+  let doc = await download(config.source);
   doc = await applyOverlays(doc, join(specDir, 'overlays'));
   doc = keepOperations(doc, config.operations);
   doc = (

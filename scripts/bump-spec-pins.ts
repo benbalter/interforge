@@ -10,11 +10,19 @@
  * Set GITHUB_TOKEN to avoid GitHub's anonymous rate limit.
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import ky from 'ky';
 
-async function getJson<T>(url: string, headers: Record<string, string> = {}) {
-  const response = await fetch(url, { headers });
-  if (!response.ok) throw new Error(`${response.status} fetching ${url}`);
-  return (await response.json()) as T;
+// ky retries rate limits (429, honoring Retry-After) and server errors.
+const retry = {
+  limit: 5,
+  statusCodes: [429, 500, 502, 503, 504],
+  afterStatusCodes: [429, 503],
+  maxRetryAfter: 120_000,
+  jitter: true,
+};
+
+function getJson<T>(url: string, headers: Record<string, string> = {}) {
+  return ky.get(url, { headers, retry }).json<T>();
 }
 
 async function updateConfig(forge: string, source: string, extra = {}) {
@@ -82,8 +90,8 @@ async function bumpGitlab() {
   if (!tag) throw new Error('No stable GitLab release tag found');
 
   const source = `https://gitlab.com/gitlab-org/gitlab/-/raw/${tag}/doc/api/openapi/openapi_v3.yaml`;
-  const head = await fetch(source, { method: 'HEAD' });
-  if (!head.ok) throw new Error(`${head.status}: ${source}`);
+  // Make sure the description exists at that tag.
+  await ky.head(source, { retry });
   await updateConfig('gitlab', source);
 }
 

@@ -8,6 +8,11 @@ declare module 'openapi-format' {
     };
   }
   export function parseFile(pathOrUrl: string): Promise<Doc>;
+  /** Resolves to a SyntaxError (not a rejection) on invalid input. */
+  export function parseString(
+    input: string,
+    options?: { format?: 'json' | 'yaml' },
+  ): Promise<Doc | Error>;
   export function openapiOverlay(
     doc: Doc,
     options: { overlaySet: Doc },
