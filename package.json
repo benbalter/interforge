@@ -28,7 +28,8 @@
     "fix": "eslint --fix . && prettier --write .",
     "all": "npm run fix && npm run typecheck && npm test && npm run build",
     "coverage": "vitest run --coverage",
-    "check:browser": "esbuild src/index.ts --bundle --platform=browser --format=esm --log-level=warning --outfile=/dev/null"
+    "check:browser": "esbuild src/index.ts --bundle --platform=browser --format=esm --log-level=warning --outfile=/dev/null",
+    "test:live": "vitest run --config vitest.live.config.ts"
   },
   "author": "Ben Balter",
   "license": "MIT",

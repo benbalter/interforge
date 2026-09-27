@@ -34,11 +34,11 @@ Goal: cover everything in [packit/ogr](https://github.com/packit/ogr)'s abstract
 
 Earn trust in the foundation before widening it.
 
-| Item                                          | Size | Notes                                                                                                                                                |
-| --------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Record live fixtures with tokens              | M    | Use a scratch GitHub repo and gitlab.com project. Cover writes, GitLab notes and statuses (they return 401 anonymously), and GitHub files over 1 MB. |
-| Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                 |
-| Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                    |
+| Item                                          | Size | Notes                                                                                                                                                                            |
+| --------------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Record live fixtures with tokens              | M    | **GitHub done** (`npm run test:live`, scratch repo, 0 spec mismatches). GitLab still needs a token and a scratch project, to cover writes, notes and statuses (401 anonymously). |
+| Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                                             |
+| Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                                                |
 
 ## Phase 2: ogr parity on GitHub and GitLab
 

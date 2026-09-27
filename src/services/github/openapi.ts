@@ -2106,7 +2106,7 @@ export interface components {
                 node_id: string;
                 url: string;
                 name: string;
-                description: string;
+                description: string | null;
                 color: string;
                 default: boolean;
                 /** @description The user who archived the label, or `null` if it has not been archived. */

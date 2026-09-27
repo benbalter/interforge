@@ -5656,7 +5656,8 @@
                   "type": "string"
                 },
                 "description": {
-                  "type": "string"
+                  "type": "string",
+                  "nullable": true
                 },
                 "color": {
                   "type": "string"

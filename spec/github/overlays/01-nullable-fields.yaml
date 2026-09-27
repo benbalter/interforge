@@ -9,3 +9,8 @@ actions:
   - target: $.components.schemas.issue.properties.pull_request.properties.merged_at
     update:
       nullable: true
+  # Null for labels without a description. The full pull-request schema
+  # already says so; the list (pull-request-simple) schema doesn't.
+  - target: $.components.schemas['pull-request-simple'].properties.labels.items.properties.description
+    update:
+      nullable: true
