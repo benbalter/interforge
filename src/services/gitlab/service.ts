@@ -1,5 +1,9 @@
 import { ForgeError } from '../../abstract/errors.js';
-import { GitService, type ProjectRef } from '../../abstract/service.js';
+import {
+  GitService,
+  type DryRunOption,
+  type ProjectRef,
+} from '../../abstract/service.js';
 import { unwrap } from '../../http.js';
 import type { RetryOptions } from '../../retry.js';
 import { createGitlabClient, type GitlabClient } from './client.js';
@@ -13,6 +17,11 @@ export interface GitlabServiceOptions {
   fetch?: typeof globalThis.fetch;
   /** Retry and rate-limit behavior. `false` turns retries off. */
   retry?: RetryOptions | false;
+  /**
+   * Skip writes (recording them in `dryRunLog`) while still reading, like
+   * ogr's read-only mode. Pass a function to hear about each skipped write.
+   */
+  dryRun?: DryRunOption;
 }
 
 export class GitlabService extends GitService {
@@ -26,8 +35,10 @@ export class GitlabService extends GitService {
     instanceUrl = 'https://gitlab.com',
     fetch,
     retry,
+    dryRun = false,
   }: GitlabServiceOptions = {}) {
     super();
+    this.dryRun = dryRun;
     this.instanceUrl = instanceUrl.replace(/\/$/, '');
     this.client = createGitlabClient({
       instanceUrl: this.instanceUrl,

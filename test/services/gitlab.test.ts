@@ -84,3 +84,15 @@ describe('GitLab specifics', () => {
     );
   });
 });
+
+describe('GitLab list files on older instances', () => {
+  test('falls back to page numbers when there is no keyset token', async () => {
+    const { service, ref, fake, setFile } = gitlab();
+    for (let n = 0; n < 5; n++) setFile(`f${n}.txt`, '');
+    const project = await service.getProject(ref);
+    fake.pageSize = 2;
+    fake.legacyTreePagination = true;
+
+    expect(await project.getFiles()).toHaveLength(5);
+  });
+});

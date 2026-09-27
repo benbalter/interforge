@@ -37,9 +37,57 @@ for (const comment of await issue.getComments()) {
 | File contents at a branch, tag or commit                                       | ✓ (incl. files over 1 MB)        | ✓                     |
 | List files: top level or recursive, regex filter, at a ref                     | ✓ (walks trees GitHub truncates) | ✓ (keyset pagination) |
 | Retries, timeouts, rate limits, remaining quota                                | ✓                                | ✓                     |
+| Lazy iteration and limits for issues, PRs, comments, statuses                  | ✓                                | ✓                     |
+| Dry run (reads go through, writes are recorded)                                | ✓                                | ✓                     |
 | Current user                                                                   | ✓                                | ✓                     |
 
 Differences are explicit: something one forge can't do throws `OperationNotSupported` instead of silently doing less. For example, GitHub has no private issues, and GitLab Free drops extra assignees without reporting an error.
+
+## Lists and limits
+
+Every list can be iterated lazily. Pages are fetched only as you consume them, so stopping early saves requests:
+
+```ts
+for await (const issue of project.iterateIssues({ status: 'all' })) {
+  if (issue.title.includes('flaky')) break; // no more pages are fetched
+}
+
+await project.getIssueList({ labels: ['bug'], limit: 10 }); // asks for 10, not 100
+await issue.getComments({ limit: 5 }); // oldest five
+await issue.getComments({ reverse: true, limit: 5 }); // newest five (fetches all)
+```
+
+The same `iterate*()` and `limit` pairs cover issues, pull requests, comments and commit statuses.
+
+## Dry run
+
+Like ogr's read-only mode: reads go to the forge as usual, but writes are skipped and recorded.
+
+- **Creates** return stand-in objects with `id: 0`.
+- **Updates** change only the local object.
+- **Recording:** every skipped write goes into `service.dryRunLog`, and to your callback if you pass one.
+
+```ts
+const service = new GitlabService({
+  token,
+  dryRun: ({ action, target, details }) =>
+    console.log(`[dry run] ${action} ${target}`, details),
+});
+const issue = await project.createIssue('Title', 'Body', { labels: ['bug'] });
+// issue.id === 0, nothing was created, and service.dryRunLog has the createIssue
+```
+
+`service.dryRun` can be switched at any time. Stand-ins are only useful while dry run is on, because their `id: 0` doesn't exist on the forge.
+
+## Supported versions and runtimes
+
+- **Runtimes:** Node 22+, browsers, and Workers-style runtimes. The library uses only `fetch`, `atob` and `TextDecoder`. CI bundles it for the browser with esbuild, which fails on any Node built-in, including inside dependencies.
+- **GitHub.com:** requests REST API version `2026-03-10` (`GITHUB_API_VERSION`), the version the types are generated from.
+- **GitHub Enterprise Server:** set `instanceUrl`, and requests go to `<instance>/api/v3`. A server that doesn't know the default API version rejects every request, so pass a version it supports, such as `apiVersion: '2022-11-28'`. Not tested against a real server.
+- **GitLab:** built from GitLab 19.4's description and tested on gitlab.com. Older self-managed versions aren't tested. Two things degrade gracefully on older instances:
+  - If `activity_filter` is ignored, system notes are still filtered out locally.
+  - If the repository tree has no keyset pagination, file listing falls back to page numbers.
+- **When the specs move ahead of a server:** the weekly spec update tracks the latest releases. The mappers only require the fields that overlay 03 declares, and those were checked against live gitlab.com traffic.
 
 ## Rate limits and retries
 
@@ -156,5 +204,6 @@ npm run specs:bump   # move pins to the latest upstream descriptions
 ## Next
 
 - Record fixtures from a scratch GitHub repo and gitlab.com project with tokens, covering writes, notes and statuses.
+- Try GitHub Enterprise Server and an older self-managed GitLab.
 - Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto forgewright on a branch and run it against GitLab.
 - See [ROADMAP.md](ROADMAP.md) for the path to full ogr parity and more forges.

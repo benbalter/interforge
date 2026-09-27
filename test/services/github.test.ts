@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { OperationNotSupported } from '../../src/abstract/errors.js';
+import { GITHUB_API_VERSION } from '../../src/services/github/client.js';
 import { GithubService } from '../../src/services/github/service.js';
 import { github } from '../support/harness.js';
 
@@ -70,5 +71,30 @@ describe('GitHub list files', () => {
       'dir/sub/c.txt',
     ]);
     expect(fake.requests).toBe(4); // truncated recursive tree, then root, dir, dir/sub
+  });
+});
+
+describe('GitHub API version', () => {
+  test('sent with every request, and configurable', async () => {
+    const { server } = await import('../support/harness.js');
+    const { http, HttpResponse } = await import('msw');
+    const versions: (string | null)[] = [];
+    server.use(
+      http.get('https://ghe.example.com/api/v3/user', ({ request }) => {
+        versions.push(request.headers.get('x-github-api-version'));
+        return HttpResponse.json({
+          login: 'alice',
+          html_url: 'https://ghe.example.com/alice',
+        });
+      }),
+    );
+    const instanceUrl = 'https://ghe.example.com';
+    await new GithubService({ instanceUrl }).getCurrentUser();
+    await new GithubService({
+      instanceUrl,
+      apiVersion: '2022-11-28',
+    }).getCurrentUser();
+
+    expect(versions).toEqual([GITHUB_API_VERSION, '2022-11-28']);
   });
 });

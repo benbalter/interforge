@@ -12,7 +12,10 @@ import {
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
-import { collectPages, decodeBase64, unwrap } from '../../http.js';
+import type { IterateOptions } from '../../abstract/comment.js';
+import { decodeBase64, iteratePages, unwrap } from '../../http.js';
+import type { IssueData } from '../../abstract/issue.js';
+import type { PullRequestData } from '../../abstract/pull-request.js';
 import { GithubIssue } from './issue.js';
 import {
   toCommitFlag,
@@ -39,14 +42,15 @@ export class GithubProject extends GitProject {
     if (!this.hasIssues) throw new IssueTrackerDisabled(this.fullRepoName);
   }
 
-  async getIssueList({
+  async *iterateIssues({
     status = 'open',
     author,
     assignee,
     labels,
-  }: IssueListOptions = {}) {
+    pageSize = 100,
+  }: IssueListOptions & IterateOptions = {}) {
     this.assertIssues();
-    const items = await collectPages((page) =>
+    const items = iteratePages((page) =>
       unwrap(
         'github',
         this.client.GET('/repos/{owner}/{repo}/issues', {
@@ -57,17 +61,17 @@ export class GithubProject extends GitProject {
               creator: author,
               assignee,
               labels: labels?.join(','),
-              per_page: 100,
+              per_page: pageSize,
               page,
             },
           },
         }),
       ),
     );
-    // GitHub lists pull requests as issues too.
-    return items
-      .filter((item) => !item.pull_request)
-      .map((item) => new GithubIssue(toIssueData(item), this));
+    for await (const item of items) {
+      // GitHub lists pull requests as issues too.
+      if (!item.pull_request) yield new GithubIssue(toIssueData(item), this);
+    }
   }
 
   async getIssue(id: number) {
@@ -84,7 +88,15 @@ export class GithubProject extends GitProject {
     return new GithubIssue(toIssueData(data), this);
   }
 
-  async createIssue(
+  protected newIssue(data: IssueData) {
+    return new GithubIssue(data, this);
+  }
+
+  protected newPullRequest(data: PullRequestData) {
+    return new GithubPullRequest(data, this);
+  }
+
+  protected async performCreateIssue(
     title: string,
     body: string,
     { labels, assignees, private: confidential }: CreateIssueOptions = {},
@@ -103,19 +115,31 @@ export class GithubProject extends GitProject {
     return new GithubIssue(toIssueData(data), this);
   }
 
-  async getPrList({ status = 'open' }: { status?: PRStatus } = {}) {
-    const state = status === 'merged' ? 'closed' : status;
-    const items = await collectPages((page) =>
+  async *iteratePrs({
+    status = 'open',
+    pageSize = 100,
+  }: { status?: PRStatus } & IterateOptions = {}) {
+    // GitHub has no merged filter: list closed ones and keep the merged.
+    const merged = status === 'merged';
+    const items = iteratePages((page) =>
       unwrap(
         'github',
         this.client.GET('/repos/{owner}/{repo}/pulls', {
-          params: { path: this.path, query: { state, per_page: 100, page } },
+          params: {
+            path: this.path,
+            query: {
+              state: merged ? 'closed' : status,
+              per_page: merged ? 100 : pageSize,
+              page,
+            },
+          },
         }),
       ),
     );
-    return items
-      .map((item) => new GithubPullRequest(toPullRequestData(item), this))
-      .filter((pr) => status !== 'merged' || pr.status === 'merged');
+    for await (const item of items) {
+      const pr = new GithubPullRequest(toPullRequestData(item), this);
+      if (!merged || pr.status === 'merged') yield pr;
+    }
   }
 
   async getPr(id: number) {
@@ -128,7 +152,7 @@ export class GithubProject extends GitProject {
     return new GithubPullRequest(toPullRequestData(data), this);
   }
 
-  async createPr(
+  protected async performCreatePr(
     title: string,
     body: string,
     targetBranch: string,
@@ -212,7 +236,7 @@ export class GithubProject extends GitProject {
     return filterPaths(paths, filterRegex);
   }
 
-  async setCommitStatus(
+  protected async performSetCommitStatus(
     sha: string,
     state: CommitStatus,
     { targetUrl, description, context }: CommitFlagOptions = {},
@@ -232,19 +256,22 @@ export class GithubProject extends GitProject {
     return toCommitFlag(data, sha);
   }
 
-  async getCommitStatuses(sha: string) {
-    const items = await collectPages((page) =>
+  async *iterateCommitStatuses(
+    sha: string,
+    { pageSize = 100 }: IterateOptions = {},
+  ) {
+    const items = iteratePages((page) =>
       unwrap(
         'github',
         this.client.GET('/repos/{owner}/{repo}/commits/{ref}/statuses', {
           params: {
             path: { ...this.path, ref: sha },
-            query: { per_page: 100, page },
+            query: { per_page: pageSize, page },
           },
         }),
       ),
     );
-    return items.map((status) => toCommitFlag(status, sha));
+    for await (const status of items) yield toCommitFlag(status, sha);
   }
 
   async refresh() {

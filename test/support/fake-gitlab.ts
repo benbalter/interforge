@@ -219,17 +219,29 @@ export function fakeGitlab({
 
     // Keyset pagination: page_token is where the next page starts.
     const all = [...entries.values()];
-    const start = Number(query.get('page_token') ?? 0);
+    const legacy = fake.legacyTreePagination;
+    const perPageRequested = Number(query.get('per_page') ?? 20);
+    const start = legacy
+      ? (Number(query.get('page') ?? 1) - 1) *
+        Math.min(perPageRequested, fake.pageSize)
+      : Number(query.get('page_token') ?? 0);
     const perPage = Math.min(
       Number(query.get('per_page') ?? 20),
       fake.pageSize,
     );
     const next = start + perPage;
     const link = new URL(`${instanceUrl}/api/v4/projects/1/repository/tree`);
-    link.search = new URLSearchParams({
-      ...Object.fromEntries(query),
-      page_token: String(next),
-    }).toString();
+    const params = Object.fromEntries(query);
+    delete params.page_token;
+    delete params.page;
+    link.search = new URLSearchParams(
+      legacy
+        ? {
+            ...params,
+            page: String(start / Math.min(perPageRequested, fake.pageSize) + 2),
+          }
+        : { ...params, page_token: String(next) },
+    ).toString();
     return {
       body: all.slice(start, next),
       headers:

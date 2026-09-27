@@ -26,20 +26,19 @@ Goal: cover everything in [packit/ogr](https://github.com/packit/ogr)'s abstract
 | Commit statuses | `set_commit_status`, `get_commit_statuses`                                                                                    | ✓      |
 | Files           | `get_file_content`, `get_files`                                                                                               | ✓      |
 | Service         | `get_rate_limit_remaining`, plus retries, timeouts and rate-limit waits                                                       | ✓      |
+| Lists           | `iterate*()` async generators and `limit` for issues, PRs, comments, statuses                                                 | ✓      |
+| Read-only mode  | `dryRun` (ogr's `read_only.py`): writes recorded, stand-ins returned                                                          | ✓      |
+| Portability     | browsers and Workers (checked in CI); GHES `apiVersion`; supported versions documented                                        | ✓      |
 
 ## Phase 1: Harden what exists
 
 Earn trust in the foundation before widening it.
 
-| Item                                          | Size | Notes                                                                                                                                                                 |
-| --------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Record live fixtures with tokens              | M    | Use a scratch GitHub repo and gitlab.com project. Cover writes, GitLab notes and statuses (they return 401 anonymously), and GitHub files over 1 MB.                  |
-| Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                                  |
-| Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                                     |
-| Lazy iteration                                | S    | `iterateIssues()` and friends as async generators, plus a `limit`. One live list fetched 2,179 MRs just to filter them.                                               |
-| Version skew policy                           | S    | The specs track the latest release, but self-managed GitLab and GHES lag behind. Document the oldest supported versions, and treat new fields as optional in mappers. |
-| Runtime portability                           | S    | Replace `Buffer` with `atob`/`TextDecoder` so browsers and Workers work.                                                                                              |
-| Read-only (dry-run) mode                      | M    | ogr's `read_only.py`: write methods log and return stand-in objects. bulk-issue-creator's preview mode would use this.                                                |
+| Item                                          | Size | Notes                                                                                                                                                |
+| --------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Record live fixtures with tokens              | M    | Use a scratch GitHub repo and gitlab.com project. Cover writes, GitLab notes and statuses (they return 401 anonymously), and GitHub files over 1 MB. |
+| Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                 |
+| Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                    |
 
 ## Phase 2: ogr parity on GitHub and GitLab
 

@@ -29,7 +29,8 @@ export async function getProject(
  *   used: it needs a different header and can only reach a few endpoints.
  */
 export function servicesFromEnv(
-  env: Record<string, string | undefined> = process.env,
+  // `globalThis.process` so this module also loads where there's no process.
+  env: Record<string, string | undefined> = globalThis.process?.env ?? {},
 ): GitService[] {
   const services: GitService[] = [];
   if (env.GITHUB_TOKEN) {

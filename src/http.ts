@@ -78,21 +78,46 @@ export function hasNextPage(response: Response): boolean {
 }
 
 /**
- * Collects every page of a list endpoint. Both forges accept `page` and
- * `per_page` and advertise more results with `Link: rel="next"`.
+ * Yields every item of a list endpoint, fetching a page only when the
+ * previous one is used up, so stopping early saves requests. Both forges
+ * accept `page` and `per_page` and advertise more with `Link: rel="next"`.
  */
-export async function collectPages<T>(
+export async function* iteratePages<T>(
   fetchPage: (page: number) => Promise<{ data: T[]; response: Response }>,
-): Promise<T[]> {
-  const items: T[] = [];
+): AsyncGenerator<T> {
   for (let page = 1; ; page++) {
     const { data, response } = await fetchPage(page);
-    items.push(...data);
-    if (!hasNextPage(response)) return items;
+    yield* data;
+    if (!hasNextPage(response)) return;
   }
 }
 
-/** Decodes a base64 file body (GitHub wraps it in newlines) as UTF-8. */
+/** Collects up to `limit` items, then stops iterating (and fetching). */
+export async function collect<T>(
+  items: AsyncIterable<T>,
+  limit = Infinity,
+): Promise<T[]> {
+  const result: T[] = [];
+  if (limit <= 0) return result;
+  for await (const item of items) {
+    result.push(item);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+/** Items per request: enough for `limit`, up to both forges' maximum of 100. */
+export function pageSizeFor(limit?: number): number {
+  return limit === undefined ? 100 : Math.max(1, Math.min(100, limit));
+}
+
+/**
+ * Decodes a base64 file body (GitHub wraps it in newlines) as UTF-8, with
+ * platform built-ins so it runs in browsers and Workers as well as Node.
+ */
 export function decodeBase64(content: string): string {
-  return Buffer.from(content, 'base64').toString('utf8');
+  const binary = atob(content.replace(/\s/g, ''));
+  return new TextDecoder().decode(
+    Uint8Array.from(binary, (char) => char.charCodeAt(0)),
+  );
 }

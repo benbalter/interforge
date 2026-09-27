@@ -1,4 +1,8 @@
-import { GitService, type ProjectRef } from '../../abstract/service.js';
+import {
+  GitService,
+  type DryRunOption,
+  type ProjectRef,
+} from '../../abstract/service.js';
 import { unwrap } from '../../http.js';
 import type { RetryOptions } from '../../retry.js';
 import { createGithubClient, type GithubClient } from './client.js';
@@ -12,8 +16,19 @@ export interface GithubServiceOptions {
   /** Override the API URL (defaults to api.github.com, or <instance>/api/v3 for GHES). */
   apiUrl?: string;
   fetch?: typeof globalThis.fetch;
+  /**
+   * REST API version to request. Defaults to the version the types are
+   * generated from (GITHUB_API_VERSION). GitHub Enterprise Server rejects
+   * versions it doesn't know, so older servers may need `2022-11-28`.
+   */
+  apiVersion?: string;
   /** Retry and rate-limit behavior. `false` turns retries off. */
   retry?: RetryOptions | false;
+  /**
+   * Skip writes (recording them in `dryRunLog`) while still reading, like
+   * ogr's read-only mode. Pass a function to hear about each skipped write.
+   */
+  dryRun?: DryRunOption;
 }
 
 export class GithubService extends GitService {
@@ -25,10 +40,13 @@ export class GithubService extends GitService {
     token,
     instanceUrl = 'https://github.com',
     apiUrl,
+    apiVersion,
     fetch,
     retry,
+    dryRun = false,
   }: GithubServiceOptions = {}) {
     super();
+    this.dryRun = dryRun;
     this.instanceUrl = instanceUrl.replace(/\/$/, '');
     const defaultApiUrl =
       new URL(this.instanceUrl).hostname === 'github.com'
@@ -37,6 +55,7 @@ export class GithubService extends GitService {
     this.client = createGithubClient({
       apiUrl: apiUrl ?? defaultApiUrl,
       token,
+      apiVersion,
       fetch,
       retry,
       onRateLimit: this.observeRateLimit,

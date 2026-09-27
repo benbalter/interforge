@@ -56,6 +56,12 @@ export class FakeForge<Paths extends object = object> {
   rateLimit?: { limit: number; remaining: number; reset: number };
   /** How many requests reached the fake. */
   requests = 0;
+  /** Tree listings use page numbers, like GitLab before keyset pagination. */
+  legacyTreePagination = false;
+  /** Every request URL, in order. */
+  readonly urls: URL[] = [];
+  /** Requests other than GET, i.e. writes. */
+  writes = 0;
 
   // Stored loosely so FakeForge<paths> fits wherever any FakeForge does.
   private http: Record<Method, unknown>;
@@ -86,6 +92,8 @@ export class FakeForge<Paths extends object = object> {
     this.handlers.push(
       register(path, async ({ request, params }) => {
         this.requests++;
+        this.urls.push(new URL(request.url));
+        if (request.method !== 'GET') this.writes++;
         const headers = new Headers(this.rateLimitHeaders());
         const interruption = this.interruptions.shift();
         if (interruption) {

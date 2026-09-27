@@ -1,5 +1,5 @@
-import { filterComments, type CommentFilter } from '../../abstract/comment.js';
-import { collectPages, unwrap } from '../../http.js';
+import type { IterateOptions } from '../../abstract/comment.js';
+import { iteratePages, unwrap } from '../../http.js';
 import { GitlabComment } from './comment.js';
 import type { GitlabIssue } from './issue.js';
 import { toCommentData } from './mappers.js';
@@ -14,12 +14,12 @@ function params(parent: Parent) {
   return { id: parent.project.fullRepoName, noteable_id: parent.id };
 }
 
-export async function listNotes<P extends Parent>(
+export async function* iterateNotes<P extends Parent>(
   parent: P,
-  options?: CommentFilter,
+  { pageSize = 100 }: IterateOptions = {},
 ) {
   const { client } = parent.project;
-  const notes = await collectPages((page) => {
+  const notes = iteratePages((page) => {
     const init = {
       params: {
         path: params(parent),
@@ -28,7 +28,7 @@ export async function listNotes<P extends Parent>(
           activity_filter: 'only_comments' as const,
           sort: 'asc' as const,
           order_by: 'created_at' as const,
-          per_page: 100,
+          per_page: pageSize,
           page,
         },
       },
@@ -43,11 +43,11 @@ export async function listNotes<P extends Parent>(
           ),
     );
   });
-  const comments = notes
+  for await (const note of notes) {
     // ...and here, for instances that ignore activity_filter.
-    .filter((note) => !note.system)
-    .map((note) => new GitlabComment(toCommentData(note, parent.url), parent));
-  return filterComments(comments, options);
+    if (!note.system)
+      yield new GitlabComment(toCommentData(note, parent.url), parent);
+  }
 }
 
 export async function getNote<P extends Parent>(parent: P, noteId: number) {

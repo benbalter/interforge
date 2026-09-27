@@ -1,4 +1,5 @@
-import type { CommentFilter } from '../../abstract/comment.js';
+import type { CommentData, IterateOptions } from '../../abstract/comment.js';
+import { GithubComment } from './comment.js';
 import { Issue } from '../../abstract/issue.js';
 import { unwrap } from '../../http.js';
 import * as comments from './comments.js';
@@ -29,36 +30,40 @@ export class GithubIssue extends Issue {
     return this;
   }
 
-  getComments(options?: CommentFilter) {
-    return comments.listComments(this, options);
+  iterateComments(options?: IterateOptions) {
+    return comments.iterateComments(this, options);
   }
 
   getComment(commentId: number) {
     return comments.getComment(this, commentId);
   }
 
-  comment(body: string) {
+  protected newComment(data: CommentData) {
+    return new GithubComment(data, this);
+  }
+
+  protected performComment(body: string) {
     return comments.createComment(this, body);
   }
 
-  close() {
+  protected performClose() {
     return this.update({ state: 'closed' });
   }
 
-  setTitle(title: string) {
+  protected performSetTitle(title: string) {
     return this.update({ title });
   }
 
-  setDescription(description: string) {
+  protected performSetDescription(description: string) {
     return this.update({ body: description });
   }
 
-  async addLabel(...labels: string[]) {
+  protected async performAddLabel(labels: string[]) {
     await comments.addLabels(this, labels);
     return this.refresh();
   }
 
-  async addAssignee(...usernames: string[]) {
+  protected async performAddAssignee(usernames: string[]) {
     const { data } = await unwrap(
       'github',
       this.project.client.POST(

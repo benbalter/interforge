@@ -8,7 +8,10 @@ import {
   type IssueListOptions,
 } from '../../abstract/project.js';
 import type { CommitStatus, PRStatus } from '../../abstract/status.js';
-import { collectPages, decodeBase64, nextPageUrl, unwrap } from '../../http.js';
+import type { IterateOptions } from '../../abstract/comment.js';
+import { decodeBase64, iteratePages, nextPageUrl, unwrap } from '../../http.js';
+import type { IssueData } from '../../abstract/issue.js';
+import type { PullRequestData } from '../../abstract/pull-request.js';
 import { assertAssigned, GitlabIssue } from './issue.js';
 import {
   toCommitFlag,
@@ -45,14 +48,15 @@ export class GitlabProject extends GitProject {
     if (!this.hasIssues) throw new IssueTrackerDisabled(this.fullRepoName);
   }
 
-  async getIssueList({
+  async *iterateIssues({
     status = 'open',
     author,
     assignee,
     labels,
-  }: IssueListOptions = {}) {
+    pageSize = 100,
+  }: IssueListOptions & IterateOptions = {}) {
     this.assertIssues();
-    const items = await collectPages((page) =>
+    const items = iteratePages((page) =>
       unwrap(
         'gitlab',
         this.client.GET('/api/v4/projects/{id}/issues', {
@@ -63,14 +67,15 @@ export class GitlabProject extends GitProject {
               author_username: author,
               assignee_username: assignee ? [assignee] : undefined,
               labels,
-              per_page: 100,
+              per_page: pageSize,
               page,
             },
           },
         }),
       ),
     );
-    return items.map((item) => new GitlabIssue(toIssueData(item), this));
+    for await (const item of items)
+      yield new GitlabIssue(toIssueData(item), this);
   }
 
   async getIssue(id: number) {
@@ -84,7 +89,15 @@ export class GitlabProject extends GitProject {
     return new GitlabIssue(toIssueData(data), this);
   }
 
-  async createIssue(
+  protected newIssue(data: IssueData) {
+    return new GitlabIssue(data, this);
+  }
+
+  protected newPullRequest(data: PullRequestData) {
+    return new GitlabMergeRequest(data, this);
+  }
+
+  protected async performCreateIssue(
     title: string,
     body: string,
     { labels, assignees = [], private: confidential }: CreateIssueOptions = {},
@@ -110,21 +123,24 @@ export class GitlabProject extends GitProject {
     return issue;
   }
 
-  async getPrList({ status = 'open' }: { status?: PRStatus } = {}) {
-    const items = await collectPages((page) =>
+  async *iteratePrs({
+    status = 'open',
+    pageSize = 100,
+  }: { status?: PRStatus } & IterateOptions = {}) {
+    const items = iteratePages((page) =>
       unwrap(
         'gitlab',
         this.client.GET('/api/v4/projects/{id}/merge_requests', {
           params: {
             path: { id: this.id },
-            query: { state: MR_STATE[status], per_page: 100, page },
+            query: { state: MR_STATE[status], per_page: pageSize, page },
           },
         }),
       ),
     );
-    return items.map(
-      (item) => new GitlabMergeRequest(toPullRequestData(item), this),
-    );
+    for await (const item of items) {
+      yield new GitlabMergeRequest(toPullRequestData(item), this);
+    }
   }
 
   async getPr(id: number) {
@@ -140,7 +156,7 @@ export class GitlabProject extends GitProject {
     return new GitlabMergeRequest(toPullRequestData(data), this);
   }
 
-  async createPr(
+  protected async performCreatePr(
     title: string,
     body: string,
     targetBranch: string,
@@ -183,9 +199,10 @@ export class GitlabProject extends GitProject {
     recursive = false,
   }: GetFilesOptions = {}) {
     const paths: string[] = [];
-    let pageToken: string | undefined;
-    // Keyset pagination, which GitLab recommends for large trees.
-    do {
+    // Keyset pagination, which GitLab recommends for large trees. Instances
+    // too old for it answer with page numbers instead, so follow either.
+    let next: { page_token?: string; page?: number } = {};
+    for (;;) {
       const { data, response } = await unwrap(
         'gitlab',
         this.client.GET('/api/v4/projects/{id}/repository/tree', {
@@ -195,20 +212,24 @@ export class GitlabProject extends GitProject {
               ref,
               recursive,
               pagination: 'keyset',
-              page_token: pageToken,
               per_page: 100,
+              ...next,
             },
           },
         }),
       );
       paths.push(...data.filter((e) => e.type === 'blob').map((e) => e.path));
-      pageToken =
-        nextPageUrl(response)?.searchParams.get('page_token') ?? undefined;
-    } while (pageToken);
+      const url = nextPageUrl(response);
+      const token = url?.searchParams.get('page_token');
+      const page = url?.searchParams.get('page');
+      if (token) next = { page_token: token };
+      else if (page) next = { page: Number(page) };
+      else break;
+    }
     return filterPaths(paths, filterRegex);
   }
 
-  async setCommitStatus(
+  protected async performSetCommitStatus(
     sha: string,
     state: CommitStatus,
     { targetUrl, description, context }: CommitFlagOptions = {},
@@ -228,8 +249,11 @@ export class GitlabProject extends GitProject {
     return toCommitFlag(data);
   }
 
-  async getCommitStatuses(sha: string) {
-    const items = await collectPages((page) =>
+  async *iterateCommitStatuses(
+    sha: string,
+    { pageSize = 100 }: IterateOptions = {},
+  ) {
+    const items = iteratePages((page) =>
       unwrap(
         'gitlab',
         this.client.GET(
@@ -237,13 +261,13 @@ export class GitlabProject extends GitProject {
           {
             params: {
               path: { id: this.id, sha },
-              query: { all: true, per_page: 100, page },
+              query: { all: true, per_page: pageSize, page },
             },
           },
         ),
       ),
     );
-    return items.map(toCommitFlag);
+    for await (const status of items) yield toCommitFlag(status);
   }
 
   async refresh() {

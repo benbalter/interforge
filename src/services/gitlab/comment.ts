@@ -8,7 +8,7 @@ type Parent = GitlabIssue | GitlabMergeRequest;
 
 /** A note on a GitLab issue or merge request. */
 export class GitlabComment<P extends Parent = Parent> extends Comment<P> {
-  async setBody(body: string) {
+  protected async performSetBody(body: string) {
     const { client, fullRepoName } = this.parent.project;
     const params = {
       path: { id: fullRepoName, noteable_id: this.parent.id, note_id: this.id },

@@ -1,4 +1,5 @@
-import type { CommentFilter } from '../../abstract/comment.js';
+import type { CommentData, IterateOptions } from '../../abstract/comment.js';
+import { GitlabComment } from './comment.js';
 import { OperationNotSupported } from '../../abstract/errors.js';
 import { Issue } from '../../abstract/issue.js';
 import { unwrap } from '../../http.js';
@@ -27,35 +28,39 @@ export class GitlabIssue extends Issue {
     return this;
   }
 
-  getComments(options?: CommentFilter) {
-    return notes.listNotes(this, options);
+  iterateComments(options?: IterateOptions) {
+    return notes.iterateNotes(this, options);
   }
 
   getComment(commentId: number) {
     return notes.getNote(this, commentId);
   }
 
-  comment(body: string) {
+  protected newComment(data: CommentData) {
+    return new GitlabComment(data, this);
+  }
+
+  protected performComment(body: string) {
     return notes.createNote(this, body);
   }
 
-  close() {
+  protected performClose() {
     return this.update({ state_event: 'close' });
   }
 
-  setTitle(title: string) {
+  protected performSetTitle(title: string) {
     return this.update({ title });
   }
 
-  setDescription(description: string) {
+  protected performSetDescription(description: string) {
     return this.update({ description });
   }
 
-  addLabel(...labels: string[]) {
+  protected performAddLabel(labels: string[]) {
     return this.update({ add_labels: labels });
   }
 
-  async addAssignee(...usernames: string[]) {
+  protected async performAddAssignee(usernames: string[]) {
     const wanted = [...new Set([...this.assignees, ...usernames])];
     await this.update({
       assignee_ids: await this.project.service.getUserIds(wanted),

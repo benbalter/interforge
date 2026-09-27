@@ -1,4 +1,5 @@
-import type { CommentFilter } from '../../abstract/comment.js';
+import type { CommentData, IterateOptions } from '../../abstract/comment.js';
+import { GitlabComment } from './comment.js';
 import { PullRequest } from '../../abstract/pull-request.js';
 import { unwrap } from '../../http.js';
 import { toPullRequestData } from './mappers.js';
@@ -30,31 +31,41 @@ export class GitlabMergeRequest extends PullRequest {
     return this;
   }
 
-  getComments(options?: CommentFilter) {
-    return notes.listNotes(this, options);
+  iterateComments(options?: IterateOptions) {
+    return notes.iterateNotes(this, options);
   }
 
   getComment(commentId: number) {
     return notes.getNote(this, commentId);
   }
 
-  comment(body: string) {
+  protected newComment(data: CommentData) {
+    return new GitlabComment(data, this);
+  }
+
+  protected performComment(body: string) {
     return notes.createNote(this, body);
   }
 
-  close() {
+  protected performClose() {
     return this.update({ state_event: 'close' });
   }
 
-  updateInfo({ title, description }: { title?: string; description?: string }) {
+  protected performUpdateInfo({
+    title,
+    description,
+  }: {
+    title?: string;
+    description?: string;
+  }) {
     return this.update({ title, description });
   }
 
-  addLabel(...labels: string[]) {
+  protected performAddLabel(labels: string[]) {
     return this.update({ add_labels: labels });
   }
 
-  async merge() {
+  protected async performMerge() {
     const { data } = await unwrap(
       'gitlab',
       this.project.client.PUT(

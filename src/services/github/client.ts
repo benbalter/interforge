@@ -11,6 +11,7 @@ export function createGithubClient(options: {
   apiUrl: string;
   token?: string;
   fetch?: typeof globalThis.fetch;
+  apiVersion?: string;
   /** `false` turns retries off. */
   retry?: RetryOptions | false;
   onRateLimit?: (limit: RateLimit) => void;
@@ -28,7 +29,7 @@ export function createGithubClient(options: {
     headers: {
       Accept: 'application/vnd.github+json',
       'User-Agent': 'forgewright',
-      'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      'X-GitHub-Api-Version': options.apiVersion ?? GITHUB_API_VERSION,
       ...(options.token && { Authorization: `Bearer ${options.token}` }),
     },
   });

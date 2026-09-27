@@ -23,6 +23,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Fails if anything (including dependencies) needs a Node built-in.
+      - run: npm run check:browser
 
   specs:
     name: Generated specs are up to date

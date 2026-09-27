@@ -1,43 +1,38 @@
-import type { CommentFilter } from '../../abstract/comment.js';
-import { filterComments } from '../../abstract/comment.js';
-import type { GitProject } from '../../abstract/project.js';
-import { collectPages, unwrap } from '../../http.js';
+import type { IterateOptions } from '../../abstract/comment.js';
+import { iteratePages, unwrap } from '../../http.js';
 import { GithubComment } from './comment.js';
+import type { GithubIssue } from './issue.js';
 import { toCommentData } from './mappers.js';
-import type { GithubService } from './service.js';
+import type { GithubPullRequest } from './pull-request.js';
 
 // Issues and pull requests share GitHub's issue comments API.
 
-interface Parent {
-  id: number;
-  project: GitProject;
-}
+type Parent = GithubIssue | GithubPullRequest;
 
 function context(parent: Parent) {
-  const { namespace: owner, repo, service } = parent.project;
-  return { owner, repo, client: (service as GithubService).client };
+  const { namespace: owner, repo, client } = parent.project;
+  return { owner, repo, client };
 }
 
-export async function listComments<P extends Parent>(
+export async function* iterateComments<P extends Parent>(
   parent: P,
-  options?: CommentFilter,
+  { pageSize = 100 }: IterateOptions = {},
 ) {
   const { owner, repo, client } = context(parent);
-  const comments = await collectPages((page) =>
+  const comments = iteratePages((page) =>
     unwrap(
       'github',
       client.GET('/repos/{owner}/{repo}/issues/{issue_number}/comments', {
         params: {
           path: { owner, repo, issue_number: parent.id },
-          query: { per_page: 100, page },
+          query: { per_page: pageSize, page },
         },
       }),
     ),
   );
-  return filterComments(
-    comments.map((c) => new GithubComment(toCommentData(c), parent)),
-    options,
-  );
+  for await (const comment of comments) {
+    yield new GithubComment(toCommentData(comment), parent);
+  }
 }
 
 export async function getComment<P extends Parent>(parent: P, id: number) {
