@@ -1,9 +1,11 @@
 # interforge
 
+**One TypeScript API for GitHub and GitLab.** Write bots, CI scripts and other automation once, and run them against either forge.
+
+interforge is a typed client for the GitHub REST API and the GitLab REST API behind a single interface, so you don't need Octokit for one and gitbeaker for the other. It covers issues, pull requests and merge requests, comments, commit statuses and reading repository files. It runs on Node.js 22+ and uses only web APIs, so it's built to work in browsers and Workers-style runtimes too. The types are generated from each forge's own OpenAPI description, and the object model follows Python's [ogr](https://github.com/packit/ogr).
+
 > [!WARNING]
 > **Experimental.** interforge is a prototype: it isn't on npm yet, and it's only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
-
-One TypeScript API for many git forges. Write automation once, and run it against GitHub or GitLab.
 
 ```ts
 import { getProject, servicesFromEnv } from 'interforge';
@@ -41,7 +43,7 @@ for (const comment of await issue.getComments()) {
 | Dry run (reads go through, writes are recorded)                                | ✓                                | ✓                     |
 | Current user                                                                   | ✓                                | ✓                     |
 
-Differences are explicit: something one forge can't do throws `OperationNotSupported` instead of silently doing less. For example, GitHub has no private issues, and GitLab Free drops extra assignees without reporting an error.
+Differences are explicit: something one forge can't do throws `OperationNotSupported` instead of silently doing less. For example, GitHub has no private issues, and GitLab Free would silently keep only the first assignee, so interforge throws instead.
 
 ## Lists and limits
 
@@ -87,7 +89,7 @@ const issue = await project.createIssue('Title', 'Body', { labels: ['bug'] });
 - **GitLab:** built from GitLab 19.4's description and tested on gitlab.com. Older self-managed versions aren't tested. Two things degrade gracefully on older instances:
   - If `activity_filter` is ignored, system notes are still filtered out locally.
   - If the repository tree has no keyset pagination, file listing falls back to page numbers.
-- **When the specs move ahead of a server:** the weekly spec update tracks the latest releases. The mappers only require the fields that overlay 03 declares, and those were checked against live gitlab.com traffic.
+- **When the specs move ahead of a server:** the weekly spec update tracks the latest releases. The mappers only require the fields that the required-fields overlay ([`03-required-and-nullable-fields.yaml`](spec/gitlab/overlays/03-required-and-nullable-fields.yaml)) declares, and those were checked against live gitlab.com traffic.
 
 ## Rate limits and retries
 
@@ -206,7 +208,7 @@ INTERFORGE_GITHUB_TOKEN=… INTERFORGE_GITHUB_REPO=owner/repo npm run test:live
 - **GitLab:** not yet verified live for writes, notes or commit statuses. gitlab.com answers `401` for those without a token, even on public projects.
 - Anonymous gitlab.com requests get a reduced project view without `issues_enabled`. `hasIssues` then defaults to `true`.
 
-## Next
+## What's next
 
 - Run the live suite against GitLab. It needs a token and a scratch project.
 - Try GitHub Enterprise Server and an older self-managed GitLab.
