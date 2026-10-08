@@ -138,9 +138,8 @@ Things the target tools need that ogr doesn't do.
 
 ## Release readiness
 
-These are needed before anything is public.
+These are needed before publishing to npm.
 
-- [ ] Pick the name, and talk to the Packit maintainers about the relationship with ogr.
 - [ ] Semantic versioning, a changelog, and npm provenance.
 - [ ] API docs (TypeDoc) and a table of each forge's differences.
 - [ ] Nightly live-verification job against the scratch repos, with tokens held as repository secrets.

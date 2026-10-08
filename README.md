@@ -1,7 +1,7 @@
 # interforge
 
 > [!WARNING]
-> **Experimental.** interforge is a prototype: it's private, unpublished, and only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
+> **Experimental.** interforge is a prototype: it isn't on npm yet, and it's only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
 
 One TypeScript API for many git forges. Write automation once, and run it against GitHub or GitLab.
 
