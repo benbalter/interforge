@@ -1,5 +1,5 @@
 {
-  "$comment": "Source description and the operations forgewright relies on. Run `npm run specs:update` after editing.",
+  "$comment": "Source description and the operations interforge relies on. Run `npm run specs:update` after editing.",
   "source": "https://raw.githubusercontent.com/github/rest-api-description/c6721f32a17a71397ae46be21be90d7f1a173b6e/descriptions/api.github.com/api.github.com.2026-03-10.json",
   "apiVersion": "2026-03-10",
   "operations": [

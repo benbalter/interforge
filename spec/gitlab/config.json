@@ -1,5 +1,5 @@
 {
-  "$comment": "Source description and the operations forgewright relies on. Overlays in ./overlays are applied first. Run `npm run specs:update` after editing.",
+  "$comment": "Source description and the operations interforge relies on. Overlays in ./overlays are applied first. Run `npm run specs:update` after editing.",
   "source": "https://gitlab.com/gitlab-org/gitlab/-/raw/v19.4.1-ee/doc/api/openapi/openapi_v3.yaml",
   "operations": [
     "GET /api/v4/user",

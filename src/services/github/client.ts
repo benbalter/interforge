@@ -28,7 +28,7 @@ export function createGithubClient(options: {
     ),
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'forgewright',
+      'User-Agent': 'interforge',
       'X-GitHub-Api-Version': options.apiVersion ?? GITHUB_API_VERSION,
       ...(options.token && { Authorization: `Bearer ${options.token}` }),
     },

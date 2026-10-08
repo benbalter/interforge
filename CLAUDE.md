@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-forgewright is one TypeScript API for many git forges (GitHub and GitLab so far), typed from each forge's OpenAPI description. It's an unpublished prototype.
+interforge is one TypeScript API for many git forges (GitHub and GitLab so far), typed from each forge's OpenAPI description. It's an unpublished prototype.
 
 ## Commands
 

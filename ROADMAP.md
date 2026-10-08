@@ -34,11 +34,11 @@ Goal: cover everything in [packit/ogr](https://github.com/packit/ogr)'s abstract
 
 Earn trust in the foundation before widening it.
 
-| Item                                          | Size | Notes                                                                                                                                                                            |
-| --------------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Record live fixtures with tokens              | M    | **GitHub done** (`npm run test:live`, scratch repo, 0 spec mismatches). GitLab still needs a token and a scratch project, to cover writes, notes and statuses (401 anonymously). |
-| Port bulk-issue-creator onto forgewright (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                                             |
-| Port comment-rollup (issues part)             | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                                                |
+| Item                                         | Size | Notes                                                                                                                                                                            |
+| -------------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Record live fixtures with tokens             | M    | **GitHub done** (`npm run test:live`, scratch repo, 0 spec mismatches). GitLab still needs a token and a scratch project, to cover writes, notes and statuses (401 anonymously). |
+| Port bulk-issue-creator onto interforge (M4) | M    | On a local branch, run it end to end against GitLab.                                                                                                                             |
+| Port comment-rollup (issues part)            | M    | Needs issue body updates, which exist. Event handling is Phase 4.                                                                                                                |
 
 ## Phase 2: ogr parity on GitHub and GitLab
 
@@ -134,7 +134,7 @@ Things the target tools need that ogr doesn't do.
 | ----------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Normalized webhook and CI events    | L    | For example, a comment-created event from a GitHub Actions payload or a GitLab note hook / `TRIGGER_PAYLOAD`. This is what comment-rollup needs to run on GitLab. Both forges publish webhook schemas: GitHub's are in the OpenAPI description, and GitLab's are documented. |
 | GitHub Discussions                  | M    | GraphQL only, so it's outside the OpenAPI approach. GitLab has no equivalent, so it would throw `OperationNotSupported` there.                                                                                                                                               |
-| A GitHub-shaped compatibility layer | M    | An Octokit-shaped wrapper over forgewright, for tools that won't be rewritten.                                                                                                                                                                                               |
+| A GitHub-shaped compatibility layer | M    | An Octokit-shaped wrapper over interforge, for tools that won't be rewritten.                                                                                                                                                                                                |
 
 ## Release readiness
 

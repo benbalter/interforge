@@ -1777,7 +1777,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ForgewrightRepositoryFile"
+                  "$ref": "#/components/schemas/InterforgeRepositoryFile"
                 }
               }
             }
@@ -7937,7 +7937,7 @@
           "state"
         ]
       },
-      "ForgewrightRepositoryFile": {
+      "InterforgeRepositoryFile": {
         "type": "object",
         "required": [
           "file_name",

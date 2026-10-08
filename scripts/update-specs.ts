@@ -1,5 +1,5 @@
 /**
- * Builds the OpenAPI descriptions forgewright is generated from.
+ * Builds the OpenAPI descriptions interforge is generated from.
  *
  * For each forge in spec/<forge>/config.json:
  *   1. download the pinned upstream description
@@ -148,7 +148,7 @@ async function build(forge: string) {
   );
 
   // Carry the upstream license into the generated code: GitLab's description
-  // is CC BY-SA 4.0, not MIT like the rest of forgewright. See NOTICE.
+  // is CC BY-SA 4.0, not MIT like the rest of interforge. See NOTICE.
   const license = (doc.info as { license?: { name?: string; url?: string } })
     .license;
   if (!license?.name) {

@@ -1,12 +1,12 @@
-# forgewright
+# interforge
 
 > [!WARNING]
-> **Experimental.** forgewright is a prototype: it's private, unpublished, and only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
+> **Experimental.** interforge is a prototype: it's private, unpublished, and only partly verified against live forges (see [Verified so far](#verified-so-far)). Expect breaking changes, and don't depend on it for anything that matters yet.
 
 One TypeScript API for many git forges. Write automation once, and run it against GitHub or GitLab.
 
 ```ts
-import { getProject, servicesFromEnv } from 'forgewright';
+import { getProject, servicesFromEnv } from 'interforge';
 
 // GITHUB_TOKEN and/or GITLAB_TOKEN (+ CI_SERVER_URL for self-managed GitLab)
 const project = await getProject(
@@ -93,7 +93,7 @@ const issue = await project.createIssue('Title', 'Body', { labels: ['bug'] });
 
 Both clients retry and time out by default:
 
-- **Rate limits** are retried for any method, because a rate-limited request wasn't carried out. That includes GitHub's 403-style limits and secondary limits, not just 429. forgewright waits for `Retry-After` or the reset time.
+- **Rate limits** are retried for any method, because a rate-limited request wasn't carried out. That includes GitHub's 403-style limits and secondary limits, not just 429. interforge waits for `Retry-After` or the reset time.
 - **Long limits:** if a limit won't clear within `maxWait`, the call throws `RateLimitError` with `resetAt` instead of sleeping.
 - **Server errors and network failures** (500/502/503/504) are retried with backoff and jitter, for reads only. A failed write may still have taken effect.
 - **Rate-limit quota:** `service.rateLimit` holds the latest rate-limit headers, and `getRateLimitRemaining()` reports the remaining quota. GitHub checks this without spending quota; GitLab uses the last response's headers.
@@ -117,7 +117,7 @@ new GithubService({ token, retry: false }); // no retries
 
 ### The model is borrowed from ogr
 
-The object model follows [packit/ogr](https://github.com/packit/ogr)'s `ogr/abstract/*` (`GitService` → `GitProject` → `Issue` / `PullRequest` → `Comment`, plus `CommitFlag`, status enums and the exception hierarchy), with ogr's names converted to camelCase. forgewright borrows the design only; no code is ported. ogr is Python and lazy (reading `issue.title` can make a request). forgewright uses hydrated objects instead:
+The object model follows [packit/ogr](https://github.com/packit/ogr)'s `ogr/abstract/*` (`GitService` → `GitProject` → `Issue` / `PullRequest` → `Comment`, plus `CommitFlag`, status enums and the exception hierarchy), with ogr's names converted to camelCase. interforge borrows the design only; no code is ported. ogr is Python and lazy (reading `issue.title` can make a request). interforge uses hydrated objects instead:
 
 - `await project.getIssue(5)` returns an `Issue` whose fields are plain data. Reading a field never makes a request.
 - Anything that talks to the forge is an async method, such as `await issue.close()` or `await issue.setTitle('…')`, and updates the object in place.
@@ -144,13 +144,13 @@ The upstream problems found so far, each fixed by an overlay in `spec/<forge>/ov
 
 - **GitLab** list endpoints (`GET …/issues`, `…/merge_requests`, `…/notes`, `…/statuses`, `/users`) are declared to return a single object, not an array.
 - **GitLab** `assignees` and `reviewers` are declared as a single user, not an array.
-- **GitLab** marks no properties as `required` and misses nullable fields (`description`, `closed_at`, `merged_at`, `source_project_id`, …). Overlay 03 declares the fields forgewright relies on. That list was checked against live gitlab.com projects, issues, merge requests and users, but not yet notes or statuses.
+- **GitLab** marks no properties as `required` and misses nullable fields (`description`, `closed_at`, `merged_at`, `source_project_id`, …). Overlay 03 declares the fields interforge relies on. That list was checked against live gitlab.com projects, issues, merge requests and users, but not yet notes or statuses.
 - **GitLab**'s repository file endpoint has no response schema at all.
 - **GitHub** marks `issue.pull_request.merged_at` as non-nullable, but the API returns `null` for unmerged pull requests.
 - **GitHub**'s pull request list schema marks label `description` as non-nullable, although the full pull request schema, and the API, allow `null`.
 - **GitHub**'s bundled examples lag its schemas. For example, `full-repository` lacks `language`, and labels lack `archived_at`. These examples are only used in tests, which patch them.
 
-About 60 more nullability gaps show up in real traffic, almost all in fields forgewright doesn't read (milestones, time stats, `auto_merge`, …). These are left alone until something depends on them.
+About 60 more nullability gaps show up in real traffic, almost all in fields interforge doesn't read (milestones, time stats, `auto_merge`, …). These are left alone until something depends on them.
 
 ### Libraries over custom code
 
@@ -195,7 +195,7 @@ npm run specs:update
 npm run specs:bump   # move pins to the latest upstream descriptions
 
 # Live tests against a scratch repository (writes to it; cleans up after)
-FORGEWRIGHT_GITHUB_TOKEN=… FORGEWRIGHT_GITHUB_REPO=owner/repo npm run test:live
+INTERFORGE_GITHUB_TOKEN=… INTERFORGE_GITHUB_REPO=owner/repo npm run test:live
 ```
 
 ## Verified so far
@@ -210,7 +210,7 @@ FORGEWRIGHT_GITHUB_TOKEN=… FORGEWRIGHT_GITHUB_REPO=owner/repo npm run test:liv
 
 - Run the live suite against GitLab. It needs a token and a scratch project.
 - Try GitHub Enterprise Server and an older self-managed GitLab.
-- Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto forgewright on a branch and run it against GitLab.
+- Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto interforge on a branch and run it against GitLab.
 - See [ROADMAP.md](ROADMAP.md) for the path to full ogr parity and more forges.
 
 ## License

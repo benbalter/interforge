@@ -1,7 +1,7 @@
 /**
  * Live GitHub tests against a scratch repository. Opt in with:
  *
- *   FORGEWRIGHT_GITHUB_TOKEN=… FORGEWRIGHT_GITHUB_REPO=owner/repo npm run test:live
+ *   INTERFORGE_GITHUB_TOKEN=… INTERFORGE_GITHUB_REPO=owner/repo npm run test:live
  *
  * The token needs Issues, Pull requests, Contents and Commit statuses (read
  * and write) on that repository. Everything created is closed or deleted
@@ -12,14 +12,14 @@ import type { GitProject } from '../../src/abstract/project.js';
 import { GithubService } from '../../src/services/github/service.js';
 import { requireEnv, specCheckingFetch } from '../support/live.js';
 
-const token = process.env.FORGEWRIGHT_GITHUB_TOKEN;
-const repoName = process.env.FORGEWRIGHT_GITHUB_REPO;
+const token = process.env.INTERFORGE_GITHUB_TOKEN;
+const repoName = process.env.INTERFORGE_GITHUB_REPO;
 
 describe.skipIf(!token || !repoName)('live GitHub', () => {
   const [owner, repo] = (repoName ?? '/').split('/');
-  const run = `forgewright-live-${Date.now()}`;
+  const run = `interforge-live-${Date.now()}`;
   const branch = `${run}-branch`;
-  const label = 'forgewright-test';
+  const label = 'interforge-test';
   const checked = specCheckingFetch('github');
   let service: GithubService;
   let project: GitProject;
@@ -49,7 +49,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
       {
         method,
         headers: {
-          Authorization: `Bearer ${requireEnv('FORGEWRIGHT_GITHUB_TOKEN')}`,
+          Authorization: `Bearer ${requireEnv('INTERFORGE_GITHUB_TOKEN')}`,
           Accept: 'application/vnd.github+json',
         },
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -77,7 +77,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
       [`${run}/nested/deep.txt`, 'deep\n'],
     ]) {
       await github('PUT', `/contents/${path}`, {
-        message: `forgewright live test: ${path}`,
+        message: `interforge live test: ${path}`,
         content: Buffer.from(content).toString('base64'),
         branch,
       });
@@ -144,7 +144,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
       'First comment (edited)',
     );
 
-    await issue.addLabel('forgewright-extra');
+    await issue.addLabel('interforge-extra');
     await issue.setTitle(`${run} issue (renamed)`);
     await issue.setDescription('Updated by a live test.');
     await issue.close();
@@ -153,7 +153,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
       status: 'closed',
       title: `${run} issue (renamed)`,
     });
-    expect([...issue.labels].sort()).toEqual(['forgewright-extra', label]);
+    expect([...issue.labels].sort()).toEqual(['interforge-extra', label]);
 
     await eventually(async () => {
       const closed = await project.getIssueList({
@@ -197,7 +197,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
     await pr.addLabel(label);
     await pr.updateInfo({ title: `${run} PR (renamed)` });
     await project.setCommitStatus(pr.headCommit, 'success', {
-      context: 'forgewright/live',
+      context: 'interforge/live',
       description: 'Live test',
       targetUrl: 'https://example.com/ci',
     });
@@ -206,7 +206,7 @@ describe.skipIf(!token || !repoName)('live GitHub', () => {
     expect((await pr.getComments()).map((c) => c.body)).toEqual(['PR comment']);
     expect(await pr.getStatuses()).toMatchObject([
       {
-        context: 'forgewright/live',
+        context: 'interforge/live',
         state: 'success',
         url: 'https://example.com/ci',
       },

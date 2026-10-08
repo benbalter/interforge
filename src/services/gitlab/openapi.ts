@@ -1976,7 +1976,7 @@ export interface components {
             /** @description An existing pipeline ID, when multiple pipelines on the same commit SHA have been triggered */
             pipeline_id?: number | null;
         };
-        ForgewrightRepositoryFile: {
+        InterforgeRepositoryFile: {
             file_name: string;
             file_path: string;
             size: number;
@@ -2199,7 +2199,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ForgewrightRepositoryFile"];
+                    "application/json": components["schemas"]["InterforgeRepositoryFile"];
                 };
             };
             /** @description Bad Request */

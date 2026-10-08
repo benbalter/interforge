@@ -11,10 +11,10 @@ actions:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ForgewrightRepositoryFile'
+            $ref: '#/components/schemas/InterforgeRepositoryFile'
   - target: $.components.schemas
     update:
-      ForgewrightRepositoryFile:
+      InterforgeRepositoryFile:
         type: object
         required:
           [

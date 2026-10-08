@@ -1,5 +1,5 @@
 # The generated description marks no property as required, and misses nulls
-# the API returns for empty values. Declare what forgewright relies on, so the
+# the API returns for empty values. Declare what interforge relies on, so the
 # generated types are accurate. Checked against live gitlab.com responses for
 # projects, issues, merge requests and users (not yet notes or statuses).
 # source_project_id is not required: it's null when the fork was deleted.

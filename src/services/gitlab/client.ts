@@ -26,7 +26,7 @@ export function createGitlabClient(options: {
     // GitLab takes comma-separated arrays (labels=a,b).
     querySerializer: { array: { style: 'form', explode: false } },
     headers: {
-      'User-Agent': 'forgewright',
+      'User-Agent': 'interforge',
       ...(options.token && { Authorization: `Bearer ${options.token}` }),
     },
   });
