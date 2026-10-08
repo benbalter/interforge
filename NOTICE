@@ -1,0 +1,25 @@
+forgewright is licensed under the MIT License (see LICENSE), except for the
+third-party material below, which keeps its upstream license.
+
+GitLab REST API OpenAPI description
+  Source:    https://gitlab.com/gitlab-org/gitlab/-/blob/master/doc/api/openapi/openapi_v3.yaml
+  Copyright: (c) 2011-present GitLab Inc.
+  License:   Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+             https://creativecommons.org/licenses/by-sa/4.0/
+  Files:     spec/gitlab/openapi.json
+             spec/gitlab/overlays/*.yaml
+             src/services/gitlab/openapi.ts (and the type declarations built from it)
+  Changes:   filtered to the operations forgewright uses, patched with the
+             overlays in spec/gitlab/overlays, and converted to TypeScript types
+             by scripts/update-specs.ts. These files are shared under CC BY-SA 4.0.
+
+GitHub REST API OpenAPI description
+  Source:    https://github.com/github/rest-api-description
+  Copyright: (c) 2020 GitHub
+  License:   MIT (https://github.com/github/rest-api-description/blob/main/LICENSE.md)
+  Files:     spec/github/openapi.json
+             spec/github/overlays/*.yaml
+             src/services/github/openapi.ts (and the type declarations built from it)
+  Changes:   filtered to the operations forgewright uses, patched with the
+             overlays in spec/github/overlays, and converted to TypeScript types
+             by scripts/update-specs.ts.

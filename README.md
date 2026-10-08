@@ -212,3 +212,7 @@ FORGEWRIGHT_GITHUB_TOKEN=… FORGEWRIGHT_GITHUB_REPO=owner/repo npm run test:liv
 - Try GitHub Enterprise Server and an older self-managed GitLab.
 - Try it in practice: port [bulk-issue-creator](https://github.com/benbalter/bulk-issue-creator) onto forgewright on a branch and run it against GitLab.
 - See [ROADMAP.md](ROADMAP.md) for the path to full ogr parity and more forges.
+
+## License
+
+MIT, except the files generated from GitLab's OpenAPI description (`spec/gitlab/` and `src/services/gitlab/openapi.ts`), which keep GitLab's CC BY-SA 4.0 license. See [NOTICE](NOTICE) for details and attribution.
