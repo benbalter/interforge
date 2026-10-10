@@ -74,7 +74,7 @@
     "esbuild": "0.28.2",
     "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
-    "msw": "2.15.0",
+    "msw": "3.0.2",
     "openapi-backend": "5.21.2",
     "openapi-format": "1.33.7",
     "openapi-msw": "2.1.0",
