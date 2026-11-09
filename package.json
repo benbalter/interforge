@@ -78,7 +78,7 @@
     "openapi-backend": "5.23.0",
     "openapi-format": "1.34.0",
     "openapi-msw": "2.1.1",
-    "openapi-sampler": "1.7.9",
+    "openapi-sampler": "1.7.10",
     "openapi-typescript": "7.13.0",
     "prettier": "3.9.10",
     "tsx": "4.23.15",
