@@ -4,7 +4,7 @@
     "title": "GitLab REST API",
     "description": "GitLab REST API used to interact with a GitLab installation.",
     "termsOfService": "https://handbook.gitlab.com/handbook/legal/api-terms/",
-    "version": "19.4",
+    "version": "19.5",
     "license": {
       "name": "CC BY-SA 4.0",
       "url": "https://gitlab.com/gitlab-org/gitlab/-/blob/master/LICENSE",
@@ -379,10 +379,6 @@
       }
     },
     {
-      "name": "Duo workflow flow callback hooks",
-      "description": "Operations related to duo workflow flow callback hooks."
-    },
-    {
       "name": "Enterprise users",
       "description": "Use this API to manage the [enterprise users](https://docs.gitlab.com/user/enterprise_user/) of a\ntop-level group, including disabling two-factor authentication for them.\n\nThese endpoints work only for top-level groups, and require the Owner role for that group. The users\nthemselves do not have to be members of the group.",
       "x-displayName": "Enterprise users",
@@ -615,6 +611,10 @@
       "x-displayName": "Jira Forge subscriptions"
     },
     {
+      "name": "Jira forge user delegation",
+      "description": "Operations related to jira forge user delegation."
+    },
+    {
       "name": "Job artifacts",
       "description": "Use this API to download, keep, and delete [job artifacts](https://docs.gitlab.com/ci/jobs/job_artifacts/).",
       "x-displayName": "Job artifacts",
@@ -629,7 +629,7 @@
     },
     {
       "name": "Keys",
-      "description": "Use this API to retrieve information about [SSH keys](https://docs.gitlab.com/user/ssh/), manage a\nuser's SSH and [GPG keys](https://docs.gitlab.com/user/project/repository/signed_commits/gpg/),\nand manage [SSH certificates for top-level groups](https://docs.gitlab.com/user/group/ssh_certificates/).\n\nQueries about deploy key fingerprints also retrieve information about the projects using that key.\nIf you use a SHA256 fingerprint in an API call, URL-encode the fingerprint.\n\nManaging group SSH certificates requires the Owner role for a top-level group.",
+      "description": "Use this API to retrieve information about [SSH keys](https://docs.gitlab.com/user/ssh/), manage a\nuser's SSH and [GPG keys](https://docs.gitlab.com/user/project/repository/signed_commits/gpg/),\nand manage SSH certificates for [top-level groups](https://docs.gitlab.com/user/group/ssh_certificates/)\nand [the instance](https://docs.gitlab.com/api/instance_ssh_certificates/).\n\nQueries about deploy key fingerprints also retrieve information about the projects using that key.\nIf you use a SHA256 fingerprint in an API call, URL-encode the fingerprint.\n\nManaging group SSH certificates requires the Owner role for a top-level group.\n\nManaging instance SSH certificates requires administrator access.",
       "x-displayName": "Keys",
       "externalDocs": {
         "url": "https://docs.gitlab.com/api/user_keys/"
@@ -814,7 +814,7 @@
     },
     {
       "name": "Orbit",
-      "description": "Use this API to serve repository and merge request content to\n[GitLab Orbit](https://docs.gitlab.com/orbit/), which indexes a group's software development\nlifecycle into a queryable knowledge graph. These endpoints expose project metadata, commits, changed\npaths, blobs, repository archives, and merge request diffs, and redact sensitive values from the\ncontent Orbit ingests.\n\nThese endpoints are internal and used by the GitLab Orbit service.\n\n> [!note]\n> The availability of these endpoints is controlled by a feature flag, and GitLab Orbit is in beta.",
+      "description": "Use this API to query [GitLab Orbit](https://docs.gitlab.com/orbit/),\nwhich indexes a group's software development lifecycle.\n\n> [!note]\n> The availability of these endpoints is controlled by a feature flag, and GitLab Orbit is in beta.",
       "x-displayName": "Orbit",
       "externalDocs": {
         "url": "https://docs.gitlab.com/api/orbit/"
@@ -1226,7 +1226,7 @@
     },
     {
       "name": "Terraform",
-      "description": "Use this API to interact with the [Terraform CLI](https://docs.gitlab.com/user/packages/terraform_module_registry/).\n\n> [!warning]\n> This API is used by the [Terraform CLI](https://www.terraform.io/)\n> and is generally not meant for manual consumption. Undocumented authentication methods might be removed in the future.",
+      "description": "Use this API to interact with the [Terraform CLI](https://docs.gitlab.com/user/packages/terraform_module_registry/).\n\n> [!warning]\n> This API is used by the [Terraform CLI](https://developer.hashicorp.com/terraform)\n> and is generally not meant for manual consumption. Undocumented authentication methods might be removed in the future.",
       "x-displayName": "Terraform",
       "externalDocs": {
         "url": "https://docs.gitlab.com/api/packages/terraform-modules/"
@@ -1392,7 +1392,7 @@
           {
             "name": "username",
             "required": false,
-            "description": "Get a single user with a specific username",
+            "description": "Return a single user with the specified username.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1402,7 +1402,7 @@
           {
             "name": "extern_uid",
             "required": false,
-            "description": "Get a single user with a specific external authentication provider UID",
+            "description": "Return a single user with the specified external authentication provider UID. Use with `provider`. Administrators only. All or none of `extern_uid`, `provider` must be provided.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1412,7 +1412,7 @@
           {
             "name": "public_email",
             "required": false,
-            "description": "Get a single user with a specific public email",
+            "description": "Return a single user with the specified public email.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1422,7 +1422,7 @@
           {
             "name": "provider",
             "required": false,
-            "description": "The external provider",
+            "description": "Name of the external authentication provider. All or none of `extern_uid`, `provider` must be provided.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1432,7 +1432,7 @@
           {
             "name": "search",
             "required": false,
-            "description": "Search for a username",
+            "description": "Search for users by name, username, or public email.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1442,7 +1442,7 @@
           {
             "name": "active",
             "required": false,
-            "description": "Filters only active users",
+            "description": "If `true`, returns only active users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1452,7 +1452,7 @@
           {
             "name": "humans",
             "required": false,
-            "description": "Filters only human users",
+            "description": "If `true`, returns only regular users that are not bot or internal users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1462,7 +1462,7 @@
           {
             "name": "external",
             "required": false,
-            "description": "Filters only external users",
+            "description": "If `true`, returns only external users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1472,7 +1472,7 @@
           {
             "name": "blocked",
             "required": false,
-            "description": "Filters only blocked users",
+            "description": "If `true`, returns only blocked users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1482,7 +1482,7 @@
           {
             "name": "created_after",
             "required": false,
-            "description": "Return users created after the specified time",
+            "description": "Return users created on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -1493,7 +1493,7 @@
           {
             "name": "created_before",
             "required": false,
-            "description": "Return users created before the specified time",
+            "description": "Return users created on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -1504,7 +1504,7 @@
           {
             "name": "without_projects",
             "required": false,
-            "description": "Filters only users without projects",
+            "description": "If `true`, returns only users that do not have any projects.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1514,7 +1514,7 @@
           {
             "name": "without_project_bots",
             "required": false,
-            "description": "Filters users without project bots",
+            "description": "If `true`, excludes project bot users from the results.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1524,7 +1524,7 @@
           {
             "name": "admins",
             "required": false,
-            "description": "Filters only admin users",
+            "description": "If `true`, returns only administrators.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1544,7 +1544,7 @@
           {
             "name": "exclude_active",
             "required": false,
-            "description": "Filters only non active users",
+            "description": "If `true`, returns only users that are not active.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1554,7 +1554,7 @@
           {
             "name": "exclude_external",
             "required": false,
-            "description": "Filters only non external users",
+            "description": "If `true`, returns only users that are not external.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1564,7 +1564,7 @@
           {
             "name": "exclude_humans",
             "required": false,
-            "description": "Filters only non human users",
+            "description": "If `true`, returns only bot or internal users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1574,7 +1574,7 @@
           {
             "name": "exclude_internal",
             "required": false,
-            "description": "Filters only non internal users",
+            "description": "If `true`, returns only users that are not internal.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1584,7 +1584,7 @@
           {
             "name": "order_by",
             "required": false,
-            "description": "Return users ordered by a field",
+            "description": "Sort results by the specified field.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1601,7 +1601,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Return users sorted in ascending and descending order",
+            "description": "Sort results in ascending or descending order.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1615,7 +1615,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -1626,7 +1626,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -1637,7 +1637,7 @@
           {
             "name": "with_custom_attributes",
             "required": false,
-            "description": "Include custom attributes in the response",
+            "description": "If `true`, includes [custom attributes](https://docs.gitlab.com/api/custom_attributes/) in the response. Administrators only.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1647,7 +1647,7 @@
           {
             "name": "custom_attributes",
             "required": false,
-            "description": "Filter with custom attributes",
+            "description": "Filter by [custom attributes](https://docs.gitlab.com/api/custom_attributes/) that match all of the specified key and value pairs. Administrators only.",
             "schema": {
               "type": "object",
               "nullable": true
@@ -1657,7 +1657,7 @@
           {
             "name": "skip_ldap",
             "required": false,
-            "description": "Skip LDAP users",
+            "description": "If `true`, excludes LDAP users from the results.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1667,7 +1667,7 @@
           {
             "name": "auditors",
             "required": false,
-            "description": "Filters only auditor users",
+            "description": "If `true`, returns only auditor users.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1707,7 +1707,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -1723,7 +1723,7 @@
           {
             "name": "statistics",
             "required": false,
-            "description": "Include project statistics",
+            "description": "If `true`, includes project statistics. Available only to users with the Reporter, Developer, Maintainer, or Owner role.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1733,7 +1733,7 @@
           {
             "name": "with_custom_attributes",
             "required": false,
-            "description": "Include custom attributes in the response",
+            "description": "If `true`, includes [custom attributes](https://docs.gitlab.com/api/custom_attributes/) in the response. Administrators only.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1743,7 +1743,7 @@
           {
             "name": "custom_attributes",
             "required": false,
-            "description": "Filter with custom attributes",
+            "description": "Filter by [custom attributes](https://docs.gitlab.com/api/custom_attributes/) that match all of the specified key and value pairs. Administrators only.",
             "schema": {
               "type": "object",
               "nullable": true
@@ -1753,7 +1753,7 @@
           {
             "name": "license",
             "required": false,
-            "description": "Include project license data",
+            "description": "If `true`, includes the project license data in the response.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1793,7 +1793,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The project ID",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -1803,7 +1803,7 @@
           {
             "name": "file_path",
             "required": true,
-            "description": "The URL-encoded path to the file.",
+            "description": "URL-encoded full path to the file, for example `lib%2Fclass%2Erb`.",
             "schema": {
               "type": "string"
             },
@@ -1813,7 +1813,7 @@
           {
             "name": "ref",
             "required": true,
-            "description": "The name of branch, tag or commit",
+            "description": "Commit SHA or name of a repository branch or tag.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1857,7 +1857,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -1874,7 +1874,7 @@
           {
             "name": "ref",
             "required": false,
-            "description": "The name of a repository branch or tag, if not given the default branch is used",
+            "description": "Name of a repository branch or tag. If omitted, uses the default branch.",
             "schema": {
               "type": "string",
               "nullable": true,
@@ -1886,7 +1886,7 @@
           {
             "name": "path",
             "required": false,
-            "description": "The path of the tree",
+            "description": "Path inside the repository, used to get the contents of subdirectories.",
             "schema": {
               "type": "string",
               "nullable": true,
@@ -1898,7 +1898,7 @@
           {
             "name": "recursive",
             "required": false,
-            "description": "Used to get a recursive tree",
+            "description": "If `true`, returns a recursive tree.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1908,7 +1908,7 @@
           {
             "name": "with_last_commit",
             "required": false,
-            "description": "Include the last commit for each tree entry. Cannot be combined with \"recursive\"",
+            "description": "If `true`, includes the last commit for each tree entry. Cannot be combined with `recursive`. [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/234455) in GitLab 19.3.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -1918,7 +1918,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -1929,7 +1929,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -1940,7 +1940,7 @@
           {
             "name": "pagination",
             "required": false,
-            "description": "Specify the pagination method (\"none\" is only valid if \"recursive\" is true)",
+            "description": "Pagination method. `keyset` uses the [keyset-based pagination method](https://docs.gitlab.com/api/rest/#keyset-based-pagination). `none` is valid only if `recursive` is `true`.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1955,7 +1955,7 @@
           {
             "name": "page_token",
             "required": false,
-            "description": "Record from which to start the keyset pagination",
+            "description": "Tree record ID at which to fetch the next page. Used only with keyset pagination.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -1999,7 +1999,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -2015,7 +2015,7 @@
           {
             "name": "with_labels_details",
             "required": false,
-            "description": "Return titles of labels and other details",
+            "description": "If `true`, the response returns more details for each label in the labels field: `name`, `color`, `description`, `description_html`, `text_color`.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -2025,7 +2025,7 @@
           {
             "name": "state",
             "required": false,
-            "description": "Return opened, closed, or all issues",
+            "description": "Filter issues by state.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2040,7 +2040,7 @@
           {
             "name": "closed_by_id",
             "required": false,
-            "description": "Return issues which were closed by the user with the given ID.",
+            "description": "Return issues closed by the user with the given ID.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -2050,7 +2050,7 @@
           {
             "name": "order_by",
             "required": false,
-            "description": "Return issues ordered by `created_at`, `due_date`, `label_priority`, `milestone_due`, `popularity`, `priority`, `relative_position`, `title`, or `updated_at` fields.",
+            "description": "Sort results by the specified field.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2072,7 +2072,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Return issues sorted in `asc` or `desc` order.",
+            "description": "Sort results in ascending or descending order.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2086,7 +2086,7 @@
           {
             "name": "due_date",
             "required": false,
-            "description": "Return issues that have no due date (`0`), or whose due date is this week, this month, between two weeks ago and next month, or which are overdue. Accepts: `overdue`, `week`, `month`, `next_month_and_previous_two_weeks`, `0`",
+            "description": "Return issues that have no due date, are overdue, or whose due date is this week, this month, or between two weeks ago and next month.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2125,7 +2125,7 @@
           {
             "name": "labels",
             "required": false,
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated list of label names. `None` means no labels are assigned. `Any` means at least one label is assigned. `No+Label` (deprecated) means no labels are assigned. Set to an empty string to unassign all labels. If a label does not already exist, this creates a new project label and assigns it to the issue. Predefined names are case-insensitive.",
             "schema": {
               "type": "array",
               "items": {
@@ -2140,7 +2140,7 @@
           {
             "name": "milestone",
             "required": false,
-            "description": "Milestone title. Mutually exclusive with `milestone_id`.",
+            "description": "Milestone title. `None` lists all issues with no milestone. `Any` lists all issues that have an assigned milestone. Support for `None` and `Any` is [planned for removal](https://gitlab.com/gitlab-org/gitlab/-/issues/336044). Use the `milestone_id` attribute instead. Mutually exclusive with `milestone_id`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2150,7 +2150,7 @@
           {
             "name": "milestone_id",
             "required": false,
-            "description": "Return issues assigned to milestones with the specified timebox value (\"Any\", \"None\", \"Upcoming\" or \"Started\"). Mutually exclusive with `milestone`.",
+            "description": "Return issues assigned to milestones with a given timebox value. `None` lists all issues with no milestone. `Any` lists all issues that have an assigned milestone. `Upcoming` lists all issues assigned to milestones due in the future. `Started` lists all issues assigned to open, started milestones. The logic for `Upcoming` and `Started` differs from the logic used in the [GraphQL API](https://docs.gitlab.com/user/project/milestones/#special-milestone-filters). Mutually exclusive with `milestone`.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2166,7 +2166,7 @@
           {
             "name": "iids",
             "required": false,
-            "description": "The IID array of issues",
+            "description": "Return only the issues having the given `iid`.",
             "schema": {
               "type": "array",
               "items": {
@@ -2181,7 +2181,7 @@
           {
             "name": "search",
             "required": false,
-            "description": "Search issues for text present in the title, description, or any combination of these",
+            "description": "Search issues against their `title` and `description`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2191,7 +2191,7 @@
           {
             "name": "in",
             "required": false,
-            "description": "`title`, `description`, or a string joining them with comma",
+            "description": "Modify the scope of the `search` attribute to `title`, `description`, or `title,description`. If omitted, defaults to `title,description`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2201,7 +2201,7 @@
           {
             "name": "author_id",
             "required": false,
-            "description": "Return issues which are authored by the user with the given ID. Mutually exclusive with `author_username`.",
+            "description": "Return issues created by the given user ID. Combine with `scope=all` or `scope=assigned_to_me`. Mutually exclusive with `author_username`.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -2211,7 +2211,7 @@
           {
             "name": "author_username",
             "required": false,
-            "description": "Return issues which are authored by the user with the given username. Mutually exclusive with `author_id`.",
+            "description": "Return issues created by the given `username`. Mutually exclusive with `author_id`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2221,7 +2221,7 @@
           {
             "name": "assignee_id",
             "required": false,
-            "description": "Return issues which are assigned to the user with the given ID. Mutually exclusive with `assignee_username`.",
+            "description": "Return issues assigned to the given user `id`. `None` returns unassigned issues and `Any` returns issues with an assignee. Mutually exclusive with `assignee_username`.",
             "schema": {
               "oneOf": [
                 {
@@ -2239,7 +2239,7 @@
           {
             "name": "assignee_username",
             "required": false,
-            "description": "Return issues which are assigned to the user with the given username. Mutually exclusive with `assignee_id`.",
+            "description": "Return issues assigned to the given username. In GitLab Community Edition, only a single value is accepted. Otherwise, an invalid parameter error is returned. When multiple usernames are given, only issues assigned to all of them are returned. Mutually exclusive with `assignee_id`.",
             "schema": {
               "type": "array",
               "items": {
@@ -2252,7 +2252,7 @@
           {
             "name": "created_after",
             "required": false,
-            "description": "Return issues created after the specified time",
+            "description": "Return issues created on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -2263,7 +2263,7 @@
           {
             "name": "created_before",
             "required": false,
-            "description": "Return issues created before the specified time",
+            "description": "Return issues created on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -2274,7 +2274,7 @@
           {
             "name": "updated_after",
             "required": false,
-            "description": "Return issues updated after the specified time",
+            "description": "Return issues updated on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -2285,7 +2285,7 @@
           {
             "name": "updated_before",
             "required": false,
-            "description": "Return issues updated before the specified time",
+            "description": "Return issues updated on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -2296,7 +2296,7 @@
           {
             "name": "not",
             "required": false,
-            "description": "Filters by the specified parameters",
+            "description": "Return issues that do not match the specified parameters.",
             "schema": {
               "type": "object",
               "nullable": true
@@ -2306,7 +2306,7 @@
           {
             "name": "not[labels]",
             "required": false,
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated list of label names.",
             "schema": {
               "type": "array",
               "items": {
@@ -2329,7 +2329,7 @@
           {
             "name": "not[milestone_id]",
             "required": false,
-            "description": "Return issues assigned to milestones without the specified timebox value (\"Any\", \"None\", \"Upcoming\" or \"Started\"). Mutually exclusive with `not[milestone]`.",
+            "description": "Return issues assigned to milestones without the specified timebox value. Mutually exclusive with `not[milestone]`.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2345,7 +2345,7 @@
           {
             "name": "not[iids]",
             "required": false,
-            "description": "The IID array of issues",
+            "description": "Internal IDs of issues to exclude.",
             "schema": {
               "type": "array",
               "items": {
@@ -2358,7 +2358,7 @@
           {
             "name": "not[author_id]",
             "required": false,
-            "description": "Return issues which are not authored by the user with the given ID. Mutually exclusive with `not[author_username]`.",
+            "description": "Return issues not authored by the user with the given ID. Mutually exclusive with `not[author_username]`.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -2368,7 +2368,7 @@
           {
             "name": "not[author_username]",
             "required": false,
-            "description": "Return issues which are not authored by the user with the given username. Mutually exclusive with `not[author_id]`.",
+            "description": "Return issues not authored by the user with the given username. Mutually exclusive with `not[author_id]`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2378,7 +2378,7 @@
           {
             "name": "not[assignee_id]",
             "required": false,
-            "description": "Return issues which are not assigned to the user with the given ID. Mutually exclusive with `not[assignee_username]`.",
+            "description": "Return issues not assigned to the user with the given ID. Mutually exclusive with `not[assignee_username]`.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -2388,7 +2388,7 @@
           {
             "name": "not[assignee_username]",
             "required": false,
-            "description": "Return issues which are not assigned to the user with the given username. Mutually exclusive with `not[assignee_id]`.",
+            "description": "Return issues not assigned to the user with the given username. Mutually exclusive with `not[assignee_id]`.",
             "schema": {
               "type": "array",
               "items": {
@@ -2401,7 +2401,7 @@
           {
             "name": "not[weight]",
             "required": false,
-            "description": "Return issues without the specified weight",
+            "description": "Return issues that do not have the specified weight.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -2411,7 +2411,7 @@
           {
             "name": "not[iteration_id]",
             "required": false,
-            "description": "Return issues which are not assigned to the iteration with the given ID. Mutually exclusive with `not[iteration_title]`.",
+            "description": "Return issues not assigned to the iteration with the given ID. Mutually exclusive with `not[iteration_title]`.",
             "schema": {
               "oneOf": [
                 {
@@ -2429,7 +2429,7 @@
           {
             "name": "not[iteration_title]",
             "required": false,
-            "description": "Return issues which are not assigned to the iteration with the given title. Mutually exclusive with `not[iteration_id]`.",
+            "description": "Return issues not assigned to the iteration with the given title. Mutually exclusive with `not[iteration_id]`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2439,7 +2439,7 @@
           {
             "name": "scope",
             "required": false,
-            "description": "Return issues for the given scope: `created_by_me`, `assigned_to_me` or `all`",
+            "description": "Return issues for the given scope.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2456,7 +2456,7 @@
           {
             "name": "my_reaction_emoji",
             "required": false,
-            "description": "Return issues reacted by the authenticated user by the given emoji",
+            "description": "Return issues reacted to by the authenticated user with the given `emoji`. `None` returns issues with no reaction and `Any` returns issues with at least one reaction.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2466,7 +2466,7 @@
           {
             "name": "confidential",
             "required": false,
-            "description": "Filter confidential or public issues",
+            "description": "If `true`, returns only confidential issues. If `false`, returns only public issues.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -2494,7 +2494,7 @@
           {
             "name": "epic_id",
             "required": false,
-            "description": "The ID of an epic associated with the issues",
+            "description": "Return issues associated with the epic with the given ID. `None` returns issues that are not associated with an epic. `Any` returns issues that are associated with an epic. Premium and Ultimate only.",
             "schema": {
               "oneOf": [
                 {
@@ -2529,7 +2529,7 @@
           {
             "name": "iteration_id",
             "required": false,
-            "description": "Return issues which are assigned to the iteration with the given ID. Mutually exclusive with `iteration_title`.",
+            "description": "Return issues assigned to the iteration with the given ID. `None` returns issues that do not belong to an iteration. `Any` returns issues that belong to an iteration. Premium and Ultimate only. Mutually exclusive with `iteration_title`.",
             "schema": {
               "oneOf": [
                 {
@@ -2547,7 +2547,7 @@
           {
             "name": "iteration_title",
             "required": false,
-            "description": "Return issues which are assigned to the iteration with the given title. Mutually exclusive with `iteration_id`.",
+            "description": "Return issues assigned to the iteration with the given title. Premium and Ultimate only. Mutually exclusive with `iteration_id`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2557,7 +2557,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -2568,7 +2568,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -2579,7 +2579,7 @@
           {
             "name": "cursor",
             "required": false,
-            "description": "Cursor for obtaining the next set of records",
+            "description": "Cursor for obtaining the next set of records.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -2617,7 +2617,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -2636,7 +2636,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_0290a07ba120"
+                "$ref": "#/components/schemas/postApiV4ProjectsIdIssuesRequest"
               }
             }
           }
@@ -2673,7 +2673,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -2689,7 +2689,7 @@
           {
             "name": "issue_iid",
             "required": true,
-            "description": "The internal ID of a project issue",
+            "description": "Internal ID of the issue.",
             "schema": {
               "type": "integer"
             },
@@ -2726,7 +2726,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -2742,7 +2742,7 @@
           {
             "name": "issue_iid",
             "required": true,
-            "description": "The internal ID of a project issue",
+            "description": "Internal ID of the issue.",
             "schema": {
               "type": "integer"
             },
@@ -2754,7 +2754,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_834d35fb870b"
+                "$ref": "#/components/schemas/putApiV4ProjectsIdIssuesIssueIidRequest"
               }
             }
           }
@@ -2794,7 +2794,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -2803,7 +2803,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -2812,7 +2812,7 @@
           {
             "name": "order_by",
             "required": false,
-            "description": "Return notes ordered by `created_at` or `updated_at` fields.",
+            "description": "Sort results by the specified field.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2826,7 +2826,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Return notes sorted in `asc` or `desc` order.",
+            "description": "Sort results in ascending or descending order.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2840,7 +2840,7 @@
           {
             "name": "activity_filter",
             "required": false,
-            "description": "The type of notables which are returned.",
+            "description": "Filter notes by activity type.",
             "schema": {
               "type": "string",
               "enum": [
@@ -2855,7 +2855,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -2866,7 +2866,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -2905,7 +2905,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -2914,7 +2914,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -2926,7 +2926,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_ac6f9367f3de"
+                "$ref": "#/components/schemas/postApiV4ProjectsIdIssuesNoteableIdNotesRequest"
               }
             }
           }
@@ -2963,7 +2963,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -2972,7 +2972,7 @@
           {
             "name": "note_id",
             "required": true,
-            "description": "The ID of a note",
+            "description": "ID of the note.",
             "schema": {
               "type": "integer"
             },
@@ -2981,7 +2981,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -3018,7 +3018,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -3027,7 +3027,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -3036,7 +3036,7 @@
           {
             "name": "note_id",
             "required": true,
-            "description": "The ID of a note",
+            "description": "ID of the note.",
             "schema": {
               "type": "integer"
             },
@@ -3048,7 +3048,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_c1925678aad5"
+                "$ref": "#/components/schemas/putApiV4ProjectsIdIssuesNoteableIdNotesNoteIdRequest"
               }
             }
           }
@@ -3094,7 +3094,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project.",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -3224,7 +3224,7 @@
           {
             "name": "state",
             "required": false,
-            "description": "Returns `all` merge requests or just those that are `opened`, `closed`, `locked`, or `merged`.",
+            "description": "Filter merge requests by state.",
             "schema": {
               "type": "string",
               "enum": [
@@ -3261,7 +3261,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Returns merge requests sorted in `asc` or `desc` order.",
+            "description": "Sort results in ascending or descending order.",
             "schema": {
               "type": "string",
               "enum": [
@@ -3275,7 +3275,7 @@
           {
             "name": "with_labels_details",
             "required": false,
-            "description": "If `true`, response returns more details for each label in labels field: `:name`,`:color`, `:description`, `:description_html`, `:text_color`",
+            "description": "If `true`, the response returns more details for each label in the labels field: `name`, `color`, `description`, `description_html`, `text_color`.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -3285,7 +3285,7 @@
           {
             "name": "with_merge_status_recheck",
             "required": false,
-            "description": "If `true`, this projection requests (but does not guarantee) that the `merge_status` field be recalculated asynchronously. Introduced in GitLab 13.0.",
+            "description": "If `true`, this projection requests (but does not guarantee) an asynchronous recalculation of the `merge_status` field. Enable the `restrict_merge_status_recheck` [feature flag](https://docs.gitlab.com/administration/feature_flags/) to ignore this attribute when requested by users without the Developer, Maintainer, or Owner role.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -3295,7 +3295,7 @@
           {
             "name": "created_after",
             "required": false,
-            "description": "Returns merge requests created on or after the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests created on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3307,7 +3307,7 @@
           {
             "name": "created_before",
             "required": false,
-            "description": "Returns merge requests created on or before the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests created on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3319,7 +3319,7 @@
           {
             "name": "updated_after",
             "required": false,
-            "description": "Returns merge requests updated on or after the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests updated on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3331,7 +3331,7 @@
           {
             "name": "updated_before",
             "required": false,
-            "description": "Returns merge requests updated on or before the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests updated on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3343,7 +3343,7 @@
           {
             "name": "merged_after",
             "required": false,
-            "description": "Returns merge requests merged on or after the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests merged on or after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3355,7 +3355,7 @@
           {
             "name": "merged_before",
             "required": false,
-            "description": "Returns merge requests merged on or before the given time. Expected in ISO 8601 format.",
+            "description": "Return merge requests merged on or before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3367,7 +3367,7 @@
           {
             "name": "view",
             "required": false,
-            "description": "If simple, returns the `iid`, URL, title, description, and basic state of merge request",
+            "description": "If `simple`, returns the `iid`, URL, title, description, and basic state of merge request.",
             "schema": {
               "type": "string",
               "enum": [
@@ -3380,7 +3380,7 @@
           {
             "name": "scope",
             "required": false,
-            "description": "Returns merge requests for the given scope: `created_by_me`, `assigned_to_me`, `reviews_for_me` or `all`",
+            "description": "Return merge requests for the given scope. `reviews_for_me` returns merge requests where the current user is assigned as a reviewer.",
             "schema": {
               "type": "string",
               "enum": [
@@ -3398,7 +3398,7 @@
           {
             "name": "source_branch",
             "required": false,
-            "description": "Returns merge requests with the given source branch",
+            "description": "Return merge requests with the given source branch.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -3408,7 +3408,7 @@
           {
             "name": "source_project_id",
             "required": false,
-            "description": "Returns merge requests with the given source project id",
+            "description": "Return merge requests with the given source project ID.",
             "schema": {
               "type": "integer",
               "nullable": true
@@ -3418,7 +3418,7 @@
           {
             "name": "target_branch",
             "required": false,
-            "description": "Returns merge requests with the given target branch",
+            "description": "Return merge requests with the given target branch.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -3428,7 +3428,7 @@
           {
             "name": "search",
             "required": false,
-            "description": "Search merge requests against their `title` and `description`.",
+            "description": "Search merge requests against their `title` and `description`. Combine with the `in` attribute.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -3438,7 +3438,7 @@
           {
             "name": "in",
             "required": false,
-            "description": "Modify the scope of the search attribute. `title`, `description`, or a string joining them with comma.",
+            "description": "Modify the scope of the `search` attribute to `title`, `description`, or `title,description`. If omitted, defaults to `title,description`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -3449,7 +3449,7 @@
           {
             "name": "wip",
             "required": false,
-            "description": "Deprecated. Use `draft` instead. Filter merge requests against their `wip` status. `yes` to return only draft merge requests, `no` to return non-draft merge requests. Mutually exclusive with `draft`.",
+            "description": "Filter merge requests by their `wip` status. `yes` returns only draft merge requests, `no` returns non-draft merge requests. [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/234098) in GitLab 19.0. Use `draft` instead. Mutually exclusive with `draft`.",
             "schema": {
               "type": "string",
               "enum": [
@@ -3463,7 +3463,7 @@
           {
             "name": "draft",
             "required": false,
-            "description": "Filter merge requests against their `draft` status. `true` to return only draft merge requests, `false` to return non-draft merge requests. Mutually exclusive with `wip`.",
+            "description": "If `true`, returns only draft merge requests. If `false`, returns only non-draft merge requests. Mutually exclusive with `wip`.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -3473,7 +3473,7 @@
           {
             "name": "not",
             "required": false,
-            "description": "Returns merge requests that do not match the parameters supplied",
+            "description": "Return merge requests that do not match the parameters supplied. Accepts: `labels`, `milestone`, `author_id`, `author_username`, `assignee_id`, `assignee_username`, `reviewer_id`, `reviewer_username`, `my_reaction_emoji`.",
             "schema": {
               "type": "object",
               "nullable": true
@@ -3587,7 +3587,7 @@
           {
             "name": "deployed_before",
             "required": false,
-            "description": "Returns merge requests deployed before the given date/time. Expected in ISO 8601 format.",
+            "description": "Return merge requests deployed before the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3599,7 +3599,7 @@
           {
             "name": "deployed_after",
             "required": false,
-            "description": "Returns merge requests deployed after the given date/time. Expected in ISO 8601 format",
+            "description": "Return merge requests deployed after the specified time.",
             "schema": {
               "type": "string",
               "format": "date-time",
@@ -3611,7 +3611,7 @@
           {
             "name": "environment",
             "required": false,
-            "description": "Returns merge requests deployed to the given environment",
+            "description": "Return merge requests deployed to the given environment.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -3642,7 +3642,7 @@
           {
             "name": "approver_ids",
             "required": false,
-            "description": "Return merge requests which have specified the users with the given IDs as an individual approver",
+            "description": "Return merge requests that have all specified users as eligible approvers according to the approval rules. `None` returns merge requests with no eligible approvers, and `Any` returns merge requests with at least one eligible approver. Premium and Ultimate only.",
             "schema": {
               "oneOf": [
                 {
@@ -3660,7 +3660,7 @@
           {
             "name": "approved_by_ids",
             "required": false,
-            "description": "Return merge requests which have been approved by the specified users with the given IDs. Mutually exclusive with `approved_by_usernames`.",
+            "description": "Return merge requests approved by all the users with the given `id`, up to 5 users. `None` returns merge requests with no approvals, and `Any` returns merge requests with an approval. Mutually exclusive with `approved_by_usernames`.",
             "schema": {
               "oneOf": [
                 {
@@ -3678,7 +3678,7 @@
           {
             "name": "approved_by_usernames",
             "required": false,
-            "description": "Return merge requests which have been approved by the specified users with the given\n            usernames. Mutually exclusive with `approved_by_ids`.",
+            "description": "Return merge requests approved by all the users with the given `username`, up to 5 users. `None` returns merge requests with no approvals, and `Any` returns merge requests with an approval. Mutually exclusive with `approved_by_ids`.",
             "schema": {
               "oneOf": [
                 {
@@ -3696,7 +3696,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -3707,7 +3707,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -3718,7 +3718,7 @@
           {
             "name": "iids",
             "required": false,
-            "description": "Returns the request having the given `iid`.",
+            "description": "Return merge requests matching the provided internal IDs.",
             "schema": {
               "type": "array",
               "items": {
@@ -3770,7 +3770,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project.",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -3789,7 +3789,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_f2a98056bc9c"
+                "$ref": "#/components/schemas/postApiV4ProjectsIdMergeRequestsRequest"
               }
             }
           }
@@ -3826,7 +3826,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project.",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -3842,7 +3842,7 @@
           {
             "name": "merge_request_iid",
             "required": true,
-            "description": "The internal ID of the merge request.",
+            "description": "Internal ID of the merge request.",
             "schema": {
               "type": "integer"
             },
@@ -3851,7 +3851,7 @@
           {
             "name": "render_html",
             "required": false,
-            "description": "If `true`, response includes rendered HTML for title and description.",
+            "description": "If `true`, the response includes rendered HTML for title and description.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -3861,7 +3861,7 @@
           {
             "name": "include_diverged_commits_count",
             "required": false,
-            "description": "If `true`, response includes the commits behind the target branch.",
+            "description": "If `true`, the response includes the commits behind the target branch.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -3871,7 +3871,7 @@
           {
             "name": "include_rebase_in_progress",
             "required": false,
-            "description": "If `true`, response includes whether a rebase operation is in progress.",
+            "description": "If `true`, the response includes whether a rebase operation is in progress.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -3915,7 +3915,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project.",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -3931,7 +3931,7 @@
           {
             "name": "merge_request_iid",
             "required": true,
-            "description": "The IID of a merge request",
+            "description": "Internal ID of the merge request.",
             "schema": {
               "type": "integer"
             },
@@ -3943,7 +3943,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_6bd49bb73271"
+                "$ref": "#/components/schemas/putApiV4ProjectsIdMergeRequestsMergeRequestIidRequest"
               }
             }
           }
@@ -3992,7 +3992,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID or URL-encoded path of the project.",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "oneOf": [
                 {
@@ -4008,7 +4008,7 @@
           {
             "name": "merge_request_iid",
             "required": true,
-            "description": "The IID of a merge request",
+            "description": "Internal ID of the merge request.",
             "schema": {
               "type": "integer"
             },
@@ -4020,7 +4020,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_ce0a14f220cb"
+                "$ref": "#/components/schemas/putApiV4ProjectsIdMergeRequestsMergeRequestIidMergeRequest"
               }
             }
           }
@@ -4060,7 +4060,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -4069,7 +4069,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -4078,7 +4078,7 @@
           {
             "name": "order_by",
             "required": false,
-            "description": "Return notes ordered by `created_at` or `updated_at` fields.",
+            "description": "Sort results by the specified field.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4092,7 +4092,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Return notes sorted in `asc` or `desc` order.",
+            "description": "Sort results in ascending or descending order.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4106,7 +4106,7 @@
           {
             "name": "activity_filter",
             "required": false,
-            "description": "The type of notables which are returned.",
+            "description": "Filter notes by activity type.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4121,7 +4121,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -4132,7 +4132,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -4171,7 +4171,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -4180,7 +4180,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -4192,7 +4192,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_ac6f9367f3de"
+                "$ref": "#/components/schemas/postApiV4ProjectsIdMergeRequestsNoteableIdNotesRequest"
               }
             }
           }
@@ -4229,7 +4229,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -4238,7 +4238,7 @@
           {
             "name": "note_id",
             "required": true,
-            "description": "The ID of a note",
+            "description": "ID of the note.",
             "schema": {
               "type": "integer"
             },
@@ -4247,7 +4247,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -4284,7 +4284,7 @@
           {
             "name": "id",
             "required": true,
-            "description": "The ID of a project",
+            "description": "ID or URL-encoded path of the project.",
             "schema": {
               "type": "string"
             },
@@ -4293,7 +4293,7 @@
           {
             "name": "noteable_id",
             "required": true,
-            "description": "The ID of the noteable",
+            "description": "ID of the resource the note is attached to.",
             "schema": {
               "type": "integer"
             },
@@ -4302,7 +4302,7 @@
           {
             "name": "note_id",
             "required": true,
-            "description": "The ID of a note",
+            "description": "ID of the note.",
             "schema": {
               "type": "integer"
             },
@@ -4314,7 +4314,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_c1925678aad5"
+                "$ref": "#/components/schemas/putApiV4ProjectsIdMergeRequestsNoteableIdNotesNoteIdRequest"
               }
             }
           }
@@ -4376,7 +4376,7 @@
           {
             "name": "sha",
             "required": true,
-            "description": "The commit hash",
+            "description": "Commit SHA.",
             "schema": {
               "type": "string"
             },
@@ -4389,7 +4389,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestBody_8a354e86f041"
+                "$ref": "#/components/schemas/postApiV4ProjectsIdStatusesShaRequest"
               }
             }
           }
@@ -4451,7 +4451,7 @@
           {
             "name": "sha",
             "required": true,
-            "description": "Hash of the commit.",
+            "description": "Commit SHA.",
             "schema": {
               "type": "string"
             },
@@ -4461,7 +4461,7 @@
           {
             "name": "ref",
             "required": false,
-            "description": "Name of the branch or tag. Default is the default branch.",
+            "description": "Name of the branch or tag. Defaults to the default branch.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -4472,7 +4472,7 @@
           {
             "name": "stage",
             "required": false,
-            "description": "Filter statuses by build stage.",
+            "description": "Filter statuses by [build stage](https://docs.gitlab.com/ci/yaml/#stages). For example, `test`.",
             "schema": {
               "type": "string",
               "nullable": true
@@ -4483,7 +4483,7 @@
           {
             "name": "name",
             "required": false,
-            "description": "Filter statuses by job name.",
+            "description": "Filter statuses by [job name](https://docs.gitlab.com/ci/yaml/#job-keywords).",
             "schema": {
               "type": "string",
               "nullable": true
@@ -4505,7 +4505,7 @@
           {
             "name": "all",
             "required": false,
-            "description": "Include all statuses instead of latest only. Default is `false`.",
+            "description": "If `true`, includes all statuses instead of only the latest.",
             "schema": {
               "type": "boolean",
               "nullable": true
@@ -4515,7 +4515,7 @@
           {
             "name": "order_by",
             "required": false,
-            "description": "Values for sorting statuses. Valid values are `id` and `pipeline_id`. Default is `id`.",
+            "description": "Sort results by the specified field.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4529,7 +4529,7 @@
           {
             "name": "sort",
             "required": false,
-            "description": "Sort statuses in ascending or descending order. Valid values are `asc` and `desc`. Default is `asc`.",
+            "description": "Sort statuses in ascending or descending order. Defaults to `asc`.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4543,7 +4543,7 @@
           {
             "name": "page",
             "required": false,
-            "description": "Current page number",
+            "description": "Page number of results to retrieve.",
             "schema": {
               "type": "integer",
               "default": 1
@@ -4554,7 +4554,7 @@
           {
             "name": "per_page",
             "required": false,
-            "description": "Number of items per page",
+            "description": "Number of items to list per page.",
             "schema": {
               "type": "integer",
               "default": 20
@@ -4576,9 +4576,9 @@
         "type": "oauth2",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "https://gitlab.com/api/oauth/authorize",
-            "tokenUrl": "https://gitlab.com/api/oauth/token",
-            "refreshUrl": "https://gitlab.com/api/oauth/refresh",
+            "authorizationUrl": "https://gitlab.com/oauth/authorize",
+            "tokenUrl": "https://gitlab.com/oauth/token",
+            "refreshUrl": "https://gitlab.com/oauth/token",
             "scopes": {
               "api": "Grants complete read/write access to the API, including all groups and projects, the container registry, the dependency proxy, and the package registry.",
               "read_api": "Grants read access to the API, including all groups and projects, the container registry, and the package registry.",
@@ -4592,6 +4592,11 @@
             }
           }
         }
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "name": "PRIVATE-TOKEN",
+        "in": "header"
       }
     },
     "schemas": {
@@ -5029,6 +5034,57 @@
           }
         }
       },
+      "APIEntitiesMergeRequestAuthor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "example": "admin"
+          },
+          "public_email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "name": {
+            "type": "string",
+            "example": "Administrator"
+          },
+          "state": {
+            "type": "string",
+            "example": "active"
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "avatar_url": {
+            "type": "string",
+            "example": "https://gravatar.com/avatar/1"
+          },
+          "avatar_path": {
+            "type": "string",
+            "example": "/user/avatar/28/The-Big-Lebowski-400-400.png"
+          },
+          "custom_attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/APIEntitiesCustomAttribute"
+            }
+          },
+          "web_url": {
+            "type": "string",
+            "example": "https://gitlab.example.com/root"
+          },
+          "bot": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
       "APIEntitiesIssuableReferences": {
         "type": "object",
         "properties": {
@@ -5129,7 +5185,7 @@
             "type": "integer"
           },
           "author": {
-            "$ref": "#/components/schemas/APIEntitiesUserBasic"
+            "$ref": "#/components/schemas/APIEntitiesMergeRequestAuthor"
           },
           "assignee": {
             "$ref": "#/components/schemas/APIEntitiesUserBasic"
@@ -5663,7 +5719,7 @@
             "type": "integer"
           },
           "author": {
-            "$ref": "#/components/schemas/APIEntitiesUserBasic"
+            "$ref": "#/components/schemas/APIEntitiesMergeRequestAuthor"
           },
           "assignee": {
             "$ref": "#/components/schemas/APIEntitiesUserBasic"
@@ -6037,7 +6093,15 @@
           },
           "type": {
             "type": "string",
-            "description": "One of [\"ISSUE\", \"INCIDENT\", \"TEST_CASE\", \"REQUIREMENT\", \"TASK\", \"TICKET\"]",
+            "description": "The type of the issue.",
+            "enum": [
+              "ISSUE",
+              "INCIDENT",
+              "TEST_CASE",
+              "REQUIREMENT",
+              "TASK",
+              "TICKET"
+            ],
             "example": "ISSUE"
           },
           "assignee": {
@@ -6131,7 +6195,14 @@
           },
           "severity": {
             "type": "string",
-            "description": "One of [\"UNKNOWN\", \"LOW\", \"MEDIUM\", \"HIGH\", \"CRITICAL\"]"
+            "description": "The severity of the issue.",
+            "enum": [
+              "UNKNOWN",
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
           },
           "subscribed": {
             "type": "boolean",
@@ -7115,6 +7186,9 @@
           "auto_duo_code_review_enabled": {
             "type": "string"
           },
+          "duo_code_review_decisions_enabled": {
+            "type": "string"
+          },
           "reviewer_assignment_strategy": {
             "type": "string",
             "example": "code_owners"
@@ -7253,32 +7327,32 @@
           "created_at"
         ]
       },
-      "RequestBody_ac6f9367f3de": {
+      "postApiV4ProjectsIdIssuesNoteableIdNotesRequest": {
         "type": "object",
         "properties": {
           "body": {
             "type": "string",
-            "description": "The content of a note",
+            "description": "Content of the note. Limited to 1,000,000 characters.",
             "nullable": true
           },
           "confidential": {
             "type": "boolean",
-            "description": "[Deprecated in 15.5] Renamed to internal",
+            "description": "If `true`, marks the note as internal. Deprecated. Use `internal` instead.",
             "nullable": true
           },
           "internal": {
             "type": "boolean",
-            "description": "Internal note flag, default is false",
-            "nullable": true
+            "description": "Internal note flag.",
+            "default": false
           },
           "created_at": {
             "type": "string",
-            "description": "The creation date of the note",
+            "description": "Date and time the note was created, in ISO 8601 format such as `2016-03-11T03:45:40Z`. Requires administrator or project/group owner rights.",
             "nullable": true
           },
           "merge_request_diff_head_sha": {
             "type": "string",
-            "description": "The SHA of the head commit",
+            "description": "SHA of the head commit, which ensures the merge request wasn't updated after the API request was sent. Required for the [`/merge`](https://docs.gitlab.com/user/project/quick_actions/#merge) quick action.",
             "nullable": true
           }
         },
@@ -7286,47 +7360,95 @@
           "body"
         ]
       },
-      "RequestBody_c1925678aad5": {
+      "putApiV4ProjectsIdIssuesNoteableIdNotesNoteIdRequest": {
         "type": "object",
         "properties": {
           "body": {
             "type": "string",
-            "description": "The content of a note",
+            "description": "Content of the note. Limited to 1,000,000 characters.",
             "nullable": true
           },
           "confidential": {
             "type": "boolean",
-            "description": "[Deprecated in 14.10] No longer allowed to update confidentiality of notes",
+            "description": "If `true`, the note must already be confidential. If `false`, it must not be. Confidentiality cannot be changed after a note is created. Deprecated.",
             "nullable": true
           }
         }
       },
-      "RequestBody_f2a98056bc9c": {
+      "postApiV4ProjectsIdMergeRequestsNoteableIdNotesRequest": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "Content of the note. Limited to 1,000,000 characters.",
+            "nullable": true
+          },
+          "confidential": {
+            "type": "boolean",
+            "description": "If `true`, marks the note as internal. Deprecated. Use `internal` instead.",
+            "nullable": true
+          },
+          "internal": {
+            "type": "boolean",
+            "description": "Internal note flag.",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Date and time the note was created, in ISO 8601 format such as `2016-03-11T03:45:40Z`. Requires administrator or project/group owner rights.",
+            "nullable": true
+          },
+          "merge_request_diff_head_sha": {
+            "type": "string",
+            "description": "SHA of the head commit, which ensures the merge request wasn't updated after the API request was sent. Required for the [`/merge`](https://docs.gitlab.com/user/project/quick_actions/#merge) quick action.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "putApiV4ProjectsIdMergeRequestsNoteableIdNotesNoteIdRequest": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "Content of the note. Limited to 1,000,000 characters.",
+            "nullable": true
+          },
+          "confidential": {
+            "type": "boolean",
+            "description": "If `true`, the note must already be confidential. If `false`, it must not be. Confidentiality cannot be changed after a note is created. Deprecated.",
+            "nullable": true
+          }
+        }
+      },
+      "postApiV4ProjectsIdMergeRequestsRequest": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of the merge request.",
+            "description": "Title of the merge request.",
             "nullable": true
           },
           "source_branch": {
             "type": "string",
-            "description": "The source branch.",
+            "description": "Source branch.",
             "nullable": true
           },
           "target_branch": {
             "type": "string",
-            "description": "The target branch.",
+            "description": "Target branch.",
             "nullable": true
           },
           "target_project_id": {
             "type": "integer",
-            "description": "The target project of the merge request defaults to the :id of the project.",
+            "description": "ID of the target project for the merge request. If omitted, defaults to the source project.",
             "nullable": true
           },
           "assignee_id": {
             "type": "integer",
-            "description": "Assignee user ID.",
+            "description": "ID of the user to assign to the merge request. Set to `0` or leave empty to unassign all assignees.",
             "nullable": true
           },
           "assignee_ids": {
@@ -7334,7 +7456,7 @@
             "items": {
               "type": "integer"
             },
-            "description": "The IDs of the users to assign the merge request to, as a comma-separated list. Set to 0 or provide an empty value to unassign all assignees.",
+            "description": "IDs of the users to assign to the merge request, as a comma-separated list. Set to `0` or leave empty to unassign all assignees.",
             "nullable": true
           },
           "reviewer_ids": {
@@ -7342,7 +7464,7 @@
             "items": {
               "type": "integer"
             },
-            "description": "The IDs of the users to review the merge request, as a comma-separated list. Set to 0 or provide an empty value to unassign all reviewers.",
+            "description": "IDs of the users to set as reviewers of the merge request, as a comma-separated list. If set to `0` or left empty, no reviewers are set.",
             "nullable": true
           },
           "description": {
@@ -7355,7 +7477,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names for a merge request. Set to an empty string to unassign all labels.",
+            "description": "Comma-separated label names for the merge request. If a label does not already exist, this creates a new project label and assigns it to the merge request. Set to an empty string to unassign all labels.",
             "nullable": true
           },
           "add_labels": {
@@ -7363,7 +7485,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names to add to a merge request.",
+            "description": "Comma-separated label names to add to the merge request. If a label does not already exist, this creates a new project label and assigns it to the merge request.",
             "nullable": true
           },
           "remove_labels": {
@@ -7371,12 +7493,12 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names to remove from a merge request.",
+            "description": "Comma-separated label names to remove from the merge request.",
             "nullable": true
           },
           "milestone_id": {
             "type": "integer",
-            "description": "The global ID of a milestone to assign the merge request to. Mutually exclusive with `milestone`.",
+            "description": "Global ID of a milestone to assign to the merge request. Set to `0` or leave empty to unassign the milestone. Mutually exclusive with `milestone`.",
             "nullable": true
           },
           "milestone": {
@@ -7387,32 +7509,32 @@
           },
           "remove_source_branch": {
             "type": "boolean",
-            "description": "Flag indicating if a merge request should remove the source branch when merging.",
+            "description": "If `true`, the source branch is removed when the merge request merges.",
             "nullable": true
           },
           "allow_collaboration": {
             "type": "boolean",
-            "description": "Allow commits from members who can merge to the target branch.",
+            "description": "If `true`, allows commits from members who can merge to the target branch.",
             "nullable": true
           },
           "allow_maintainer_to_push": {
             "type": "boolean",
-            "description": "[deprecated] See allow_collaboration",
+            "description": "If `true`, allows commits from members who can merge to the target branch. Deprecated. Use `allow_collaboration` instead.",
             "nullable": true
           },
           "squash": {
             "type": "boolean",
-            "description": "Squash commits into a single commit when merging.",
+            "description": "If `true`, squashes all commits into a single commit on merge. When omitted, defaults to the [project's squash option setting](https://docs.gitlab.com/user/project/merge_requests/squash_and_merge/#configure-squash-options-for-a-project), which can override this value at merge time.",
             "nullable": true
           },
           "merge_after": {
             "type": "string",
-            "description": "Date after which the merge request can be merged.",
+            "description": "Date after which the merge request can be merged. [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/510992) in GitLab 17.8.",
             "nullable": true
           },
           "approvals_before_merge": {
             "type": "integer",
-            "description": "Number of approvals required before this can be merged",
+            "description": "Number of approvals required before the merge request can be merged. [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/353097) in GitLab 16.0. Premium and Ultimate only.",
             "nullable": true
           }
         },
@@ -7422,17 +7544,17 @@
           "target_branch"
         ]
       },
-      "RequestBody_6bd49bb73271": {
+      "putApiV4ProjectsIdMergeRequestsMergeRequestIidRequest": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of the merge request.",
+            "description": "Title of the merge request. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "target_branch": {
             "type": "string",
-            "description": "The target branch.",
+            "description": "Target branch. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "state_event": {
@@ -7441,17 +7563,17 @@
               "close",
               "reopen"
             ],
-            "description": "New state (close/reopen).",
+            "description": "Event to change the state of the merge request. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "discussion_locked": {
             "type": "boolean",
-            "description": "Flag indicating if the merge request’s discussion is locked. If the discussion is locked only project members can add, edit or resolve comments.",
+            "description": "If `true`, locks the merge request's discussion so only project members can add, edit, or resolve comments. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "assignee_id": {
             "type": "integer",
-            "description": "Assignee user ID.",
+            "description": "ID of the user to assign to the merge request. Set to `0` or leave empty to unassign all assignees. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "assignee_ids": {
@@ -7459,7 +7581,7 @@
             "items": {
               "type": "integer"
             },
-            "description": "The IDs of the users to assign the merge request to, as a comma-separated list. Set to 0 or provide an empty value to unassign all assignees.",
+            "description": "IDs of the users to assign to the merge request, as a comma-separated list. Set to `0` or leave empty to unassign all assignees. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "reviewer_ids": {
@@ -7467,12 +7589,12 @@
             "items": {
               "type": "integer"
             },
-            "description": "The IDs of the users to review the merge request, as a comma-separated list. Set to 0 or provide an empty value to unassign all reviewers.",
+            "description": "IDs of the users to set as reviewers of the merge request, as a comma-separated list. If set to `0` or left empty, no reviewers are set. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "description": {
             "type": "string",
-            "description": "Description of the merge request. Limited to 1,048,576 characters.",
+            "description": "Description of the merge request. Limited to 1,048,576 characters. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "labels": {
@@ -7480,7 +7602,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names for a merge request. Set to an empty string to unassign all labels.",
+            "description": "Comma-separated label names for the merge request. If a label does not already exist, this creates a new project label and assigns it to the merge request. Set to an empty string to unassign all labels. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "add_labels": {
@@ -7488,7 +7610,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names to add to a merge request.",
+            "description": "Comma-separated label names to add to the merge request. If a label does not already exist, this creates a new project label and assigns it to the merge request. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "remove_labels": {
@@ -7496,53 +7618,53 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated label names to remove from a merge request.",
+            "description": "Comma-separated label names to remove from the merge request. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "milestone_id": {
             "type": "integer",
-            "description": "The global ID of a milestone to assign the merge request to. Mutually exclusive with `milestone`.",
+            "description": "Global ID of a milestone to assign to the merge request. Set to `0` or leave empty to unassign the milestone. Mutually exclusive with `milestone`. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "milestone": {
             "type": "string",
-            "description": "The title of a project or ancestor-group milestone to assign the merge request to. Mutually exclusive with `milestone_id`.",
+            "description": "The title of a project or ancestor-group milestone to assign the merge request to. Mutually exclusive with `milestone_id`. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true,
             "maxLength": 255
           },
           "remove_source_branch": {
             "type": "boolean",
-            "description": "Flag indicating if a merge request should remove the source branch when merging.",
+            "description": "If `true`, the source branch is removed when the merge request merges. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "allow_collaboration": {
             "type": "boolean",
-            "description": "Allow commits from members who can merge to the target branch.",
+            "description": "If `true`, allows commits from members who can merge to the target branch. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "allow_maintainer_to_push": {
             "type": "boolean",
-            "description": "[deprecated] See allow_collaboration",
+            "description": "If `true`, allows commits from members who can merge to the target branch. Deprecated. Use `allow_collaboration` instead. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "squash": {
             "type": "boolean",
-            "description": "Squash commits into a single commit when merging.",
+            "description": "If `true`, squashes all commits into a single commit on merge. When omitted, defaults to the [project's squash option setting](https://docs.gitlab.com/user/project/merge_requests/squash_and_merge/#configure-squash-options-for-a-project), which can override this value at merge time. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "merge_after": {
             "type": "string",
-            "description": "Date after which the merge request can be merged.",
+            "description": "Date after which the merge request can be merged. [Introduced](https://gitlab.com/gitlab-org/gitlab/-/issues/510992) in GitLab 17.8. At least one of `assignee_id`, `assignee_ids`, `reviewer_ids`, `description`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `remove_source_branch`, `allow_collaboration`, `allow_maintainer_to_push`, `squash`, `target_branch`, `title`, `state_event`, `discussion_locked`, `merge_after` must be provided.",
             "nullable": true
           },
           "approvals_before_merge": {
             "type": "integer",
-            "description": "Number of approvals required before this can be merged",
+            "description": "Number of approvals required before the merge request can be merged. [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/353097) in GitLab 16.0. Premium and Ultimate only.",
             "nullable": true
           }
         }
       },
-      "RequestBody_ce0a14f220cb": {
+      "putApiV4ProjectsIdMergeRequestsMergeRequestIidMergeRequest": {
         "type": "object",
         "properties": {
           "merge_commit_message": {
@@ -7562,63 +7684,63 @@
           },
           "merge_when_pipeline_succeeds": {
             "type": "boolean",
-            "description": "Deprecated: Use auto_merge instead.",
+            "description": "If `true`, merges the merge request automatically once the pipeline succeeds. [Deprecated](https://gitlab.com/gitlab-org/gitlab/-/issues/521291) in GitLab 17.11. Use `auto_merge` instead.",
             "nullable": true
           },
           "auto_merge": {
             "type": "boolean",
-            "description": "If `true`, the merge request is set to auto merge.",
+            "description": "If `true`, the merge request merges when checks pass.",
             "nullable": true
           },
           "sha": {
             "type": "string",
-            "description": "If present, then this SHA must match the HEAD of the source branch, otherwise the merge fails.",
+            "description": "SHA that must match the HEAD of the source branch, otherwise the merge fails. Use to ensure that only reviewed commits are merged. Required if the [require a commit SHA on the merge requests API](https://docs.gitlab.com/user/group/manage/#require-a-commit-sha-on-the-merge-requests-api) setting is enabled for the group or instance.",
             "nullable": true
           },
           "squash": {
             "type": "boolean",
-            "description": "If `true`, the commits are squashed into a single commit on merge.",
+            "description": "If `true`, squashes all commits into a single commit on merge.",
             "nullable": true
           },
           "skip_merge_train": {
             "type": "boolean",
-            "description": "If `true` skips train restart when merging immediately in a merge train configured project.",
+            "description": "If `true`, skips the merge train restart when merging immediately in a project configured for merge trains.",
             "nullable": true
           }
         }
       },
-      "RequestBody_0290a07ba120": {
+      "postApiV4ProjectsIdIssuesRequest": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of an issue",
+            "description": "Title of the issue.",
             "nullable": true
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Date time when the issue was created. Available only for admins and project owners.",
+            "description": "Date and time the issue was created. Requires administrator or project/group owner rights.",
             "nullable": true
           },
           "merge_request_to_resolve_discussions_of": {
             "type": "integer",
-            "description": "The IID of a merge request for which to resolve discussions",
+            "description": "Internal ID of a merge request for which to resolve discussions. This fills the issue with a default description and marks all discussions as resolved, unless a title or description is provided.",
             "nullable": true
           },
           "discussion_to_resolve": {
             "type": "string",
-            "description": "The ID of a discussion to resolve, also pass `merge_request_to_resolve_discussions_of`",
+            "description": "ID of a discussion to resolve. Use in combination with `merge_request_to_resolve_discussions_of`.",
             "nullable": true
           },
           "iid": {
             "type": "integer",
-            "description": "The internal ID of a project issue. Available only for admins and project owners.",
+            "description": "Internal ID to assign to the new issue. Administrators or project owners only.",
             "nullable": true
           },
           "description": {
             "type": "string",
-            "description": "The description of an issue",
+            "description": "Description of the issue. Limited to 1,048,576 characters.",
             "nullable": true
           },
           "assignee_ids": {
@@ -7626,17 +7748,17 @@
             "items": {
               "type": "integer"
             },
-            "description": "The array of user IDs to assign issue",
+            "description": "IDs of the users to assign to the issue. Set to `0` or leave empty to unassign all assignees. Assigning more than one user is Premium and Ultimate only.",
             "nullable": true
           },
           "assignee_id": {
             "type": "integer",
-            "description": "[Deprecated] The ID of a user to assign issue",
+            "description": "ID of the user to assign the issue to. Available only on GitLab Free. Deprecated. Use `assignee_ids` instead.",
             "nullable": true
           },
           "milestone_id": {
             "type": "integer",
-            "description": "The ID of a milestone to assign issue. Mutually exclusive with `milestone`.",
+            "description": "Global ID of a milestone to assign to the issue. Set to `0` or leave empty to unassign the milestone. Mutually exclusive with `milestone`.",
             "nullable": true
           },
           "milestone": {
@@ -7650,7 +7772,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated list of label names. `None` means no labels are assigned. `Any` means at least one label is assigned. `No+Label` (deprecated) means no labels are assigned. Set to an empty string to unassign all labels. If a label does not already exist, this creates a new project label and assigns it to the issue. Predefined names are case-insensitive.",
             "nullable": true
           },
           "add_labels": {
@@ -7658,7 +7780,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated label names to add to the issue. If a label does not already exist, this creates a new project label and assigns it to the issue.",
             "nullable": true
           },
           "remove_labels": {
@@ -7666,27 +7788,27 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated label names to remove from the issue.",
             "nullable": true
           },
           "due_date": {
             "type": "string",
-            "description": "Date string in the format YEAR-MONTH-DAY",
+            "description": "Due date, in the format `YYYY-MM-DD`, for example `2016-03-11`.",
             "nullable": true
           },
           "start_date": {
             "type": "string",
-            "description": "Date string in the format YEAR-MONTH-DAY",
+            "description": "Start date, in the format `YYYY-MM-DD`, for example `2016-03-11`. [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/238041) in GitLab 19.1.",
             "nullable": true
           },
           "confidential": {
             "type": "boolean",
-            "description": "Boolean parameter if the issue should be confidential",
+            "description": "If `true`, the issue is confidential.",
             "nullable": true
           },
           "discussion_locked": {
             "type": "boolean",
-            "description": " Boolean parameter indicating if the issue's discussion is locked",
+            "description": "If `true`, locks the issue's discussion so only project members can add or edit comments.",
             "nullable": true
           },
           "issue_type": {
@@ -7721,12 +7843,12 @@
           },
           "epic_id": {
             "type": "integer",
-            "description": "The ID of an epic to associate the issue with. Mutually exclusive with `epic_iid`.",
+            "description": "ID of an epic to associate the issue with. Must be `0` or greater. Premium and Ultimate only. Mutually exclusive with `epic_iid`.",
             "nullable": true
           },
           "epic_iid": {
             "type": "integer",
-            "description": "The IID of an epic to associate the issue with (deprecated). Mutually exclusive with `epic_id`.",
+            "description": "Internal ID of an epic to associate the issue with. Must be `0` or greater. Deprecated and [scheduled for removal](https://gitlab.com/gitlab-org/gitlab/-/issues/35157) in API version 5. Premium and Ultimate only. Mutually exclusive with `epic_id`.",
             "nullable": true
           }
         },
@@ -7734,18 +7856,18 @@
           "title"
         ]
       },
-      "RequestBody_834d35fb870b": {
+      "putApiV4ProjectsIdIssuesIssueIidRequest": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of an issue",
+            "description": "Title of the issue. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Date time when the issue was updated. Available only for admins and project owners.",
+            "description": "Date and time the issue was updated. Administrators or project owners only. Empty or null values are not accepted.",
             "nullable": true
           },
           "state_event": {
@@ -7754,12 +7876,12 @@
               "reopen",
               "close"
             ],
-            "description": "State of the issue",
+            "description": "Event to change the state of the issue. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "description": {
             "type": "string",
-            "description": "The description of an issue",
+            "description": "Description of the issue. Limited to 1,048,576 characters. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "assignee_ids": {
@@ -7767,22 +7889,22 @@
             "items": {
               "type": "integer"
             },
-            "description": "The array of user IDs to assign issue",
+            "description": "IDs of the users to assign to the issue. Set to `0` or leave empty to unassign all assignees. Assigning more than one user is Premium and Ultimate only. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "assignee_id": {
             "type": "integer",
-            "description": "[Deprecated] The ID of a user to assign issue",
+            "description": "ID of the user to assign the issue to. Available only on GitLab Free. Deprecated. Use `assignee_ids` instead. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "milestone_id": {
             "type": "integer",
-            "description": "The ID of a milestone to assign issue. Mutually exclusive with `milestone`.",
+            "description": "Global ID of a milestone to assign to the issue. Set to `0` or leave empty to unassign the milestone. Mutually exclusive with `milestone`. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "milestone": {
             "type": "string",
-            "description": "The title of a project or ancestor-group milestone to assign the issue to. Mutually exclusive with `milestone_id`.",
+            "description": "The title of a project or ancestor-group milestone to assign the issue to. Mutually exclusive with `milestone_id`. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true,
             "maxLength": 255
           },
@@ -7791,7 +7913,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated list of label names. `None` means no labels are assigned. `Any` means at least one label is assigned. `No+Label` (deprecated) means no labels are assigned. Set to an empty string to unassign all labels. If a label does not already exist, this creates a new project label and assigns it to the issue. Predefined names are case-insensitive. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "add_labels": {
@@ -7799,7 +7921,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated label names to add to the issue. If a label does not already exist, this creates a new project label and assigns it to the issue. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "remove_labels": {
@@ -7807,27 +7929,27 @@
             "items": {
               "type": "string"
             },
-            "description": "Comma-separated list of label names",
+            "description": "Comma-separated label names to remove from the issue. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "due_date": {
             "type": "string",
-            "description": "Date string in the format YEAR-MONTH-DAY",
+            "description": "Due date, in the format `YYYY-MM-DD`, for example `2016-03-11`. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "start_date": {
             "type": "string",
-            "description": "Date string in the format YEAR-MONTH-DAY",
+            "description": "Start date, in the format `YYYY-MM-DD`, for example `2016-03-11`. [Introduced](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/238041) in GitLab 19.1. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "confidential": {
             "type": "boolean",
-            "description": "Boolean parameter if the issue should be confidential",
+            "description": "If `true`, the issue is confidential. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "discussion_locked": {
             "type": "boolean",
-            "description": " Boolean parameter indicating if the issue's discussion is locked",
+            "description": "If `true`, locks the issue's discussion so only project members can add or edit comments. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "issue_type": {
@@ -7840,7 +7962,7 @@
               "task",
               "ticket"
             ],
-            "description": "The type of the issue. Accepts: issue, incident, test_case, requirement, task, ticket",
+            "description": "The type of the issue. Accepts: issue, incident, test_case, requirement, task, ticket. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "severity": {
@@ -7852,31 +7974,32 @@
               "high",
               "critical"
             ],
-            "description": "The severity of the issue. Only applies to incidents. Accepts: unknown, low, medium, high, critical",
+            "description": "The severity of the issue. Only applies to incidents. Accepts: unknown, low, medium, high, critical. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "weight": {
             "type": "integer",
-            "description": "The weight of the issue",
+            "description": "The weight of the issue. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "epic_id": {
             "type": "integer",
-            "description": "The ID of an epic to associate the issue with. Mutually exclusive with `epic_iid`.",
+            "description": "ID of an epic to associate the issue with. Must be `0` or greater. Premium and Ultimate only. Mutually exclusive with `epic_iid`. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "epic_iid": {
             "type": "integer",
-            "description": "The IID of an epic to associate the issue with (deprecated). Mutually exclusive with `epic_id`.",
+            "description": "Internal ID of an epic to associate the issue with. Must be `0` or greater. Deprecated and [scheduled for removal](https://gitlab.com/gitlab-org/gitlab/-/issues/35157) in API version 5. Premium and Ultimate only. Mutually exclusive with `epic_id`. At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided.",
             "nullable": true
           },
           "created_at": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "At least one of `assignee_id`, `assignee_ids`, `confidential`, `created_at`, `description`, `discussion_locked`, `due_date`, `start_date`, `labels`, `add_labels`, `remove_labels`, `milestone_id`, `milestone`, `severity`, `state_event`, `title`, `issue_type`, `weight`, `epic_id`, `epic_iid` must be provided."
           }
         }
       },
-      "RequestBody_8a354e86f041": {
+      "postApiV4ProjectsIdStatusesShaRequest": {
         "type": "object",
         "properties": {
           "state": {
@@ -7889,47 +8012,47 @@
               "canceled",
               "skipped"
             ],
-            "description": "The state of the status",
+            "description": "State of the status.",
             "minLength": 1
           },
           "ref": {
             "type": "string",
-            "description": "The ref",
+            "description": "Branch or tag that the status refers to. Must be 255 characters or fewer.",
             "example": "develop",
             "nullable": true
           },
           "target_url": {
             "type": "string",
-            "description": "The target URL to associate with this status",
+            "description": "Target URL to associate with this status. Must be 255 characters or fewer.",
             "example": "https://gitlab.example.com/janedoe/gitlab-foss/builds/91",
             "nullable": true
           },
           "description": {
             "type": "string",
-            "description": "A short description of the status",
+            "description": "Short description of the status. Must be 255 characters or fewer.",
             "nullable": true
           },
           "name": {
             "type": "string",
-            "description": "A string label to differentiate this status from the status of other systems",
+            "description": "String label to differentiate this status from the status of other systems.",
             "example": "coverage",
             "nullable": true
           },
           "context": {
             "type": "string",
-            "description": "A string label to differentiate this status from the status of other systems",
+            "description": "String label to differentiate this status from the status of other systems.",
             "example": "coverage",
             "nullable": true
           },
           "coverage": {
             "type": "number",
-            "description": "The total code coverage",
+            "description": "Total code coverage.",
             "example": 100,
             "nullable": true
           },
           "pipeline_id": {
             "type": "integer",
-            "description": "An existing pipeline ID, when multiple pipelines on the same commit SHA have been triggered",
+            "description": "ID of the pipeline to set the status for. Use when multiple pipelines exist for the same commit SHA.",
             "nullable": true
           }
         },
@@ -7994,6 +8117,9 @@
     },
     {
       "oauth2": []
+    },
+    {
+      "apiKey": []
     }
   ]
 }
